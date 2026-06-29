@@ -1,0 +1,87 @@
+from django.db import models
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    PermissionsMixin,
+)
+
+from common.models import BaseModel
+
+from .choices import (
+    Gender,
+    DeviceType,
+)
+
+from .managers import UserManager
+
+
+class User(AbstractBaseUser, PermissionsMixin, BaseModel):
+    # email = models.EmailField(unique=True, db_index=True)
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100, blank=True)
+    phone_number = models.CharField(max_length=30, blank=True, db_index=True)
+    country_code = models.CharField(max_length=10, blank=True)
+    profile_picture = models.ImageField(upload_to="users/profile/", blank=True, null=True)
+    date_of_birth = models.DateField(blank=True, null=True)
+    gender = models.CharField(max_length=30, choices=Gender.choices, blank=True)
+    is_email_verified = models.BooleanField(default=False)
+    is_phone_verified = models.BooleanField(default=False)
+    failed_login_attempts = models.PositiveSmallIntegerField(default=0)
+    last_password_changed_at = models.DateTimeField(blank=True, null=True)
+    last_activity_at = models.DateTimeField(blank=True, null=True, db_index=True)
+    is_staff = models.BooleanField(default=False)
+
+    objects = UserManager()
+    USERNAME_FIELD = "phone_number"
+    REQUIRED_FIELDS = []
+
+    class Meta:
+        db_table = "users"
+        ordering = ["-created_at"]
+        indexes = [
+            # models.Index(fields=["email"]),
+            models.Index(fields=["phone_number"]),
+            models.Index(fields=["status"]),
+            models.Index(fields=["last_activity_at"]),
+        ]
+
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}".strip()
+
+    def __str__(self):
+        return self.phone_number
+
+
+class Device(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="devices")
+    device_id = models.CharField(max_length=255)
+    device_name = models.CharField(max_length=255)
+    device_type = models.CharField(max_length=20, choices=DeviceType.choices)
+    os_version = models.CharField(max_length=100, blank=True)
+    app_version = models.CharField(max_length=50, blank=True)
+    manufacturer = models.CharField(max_length=100, blank=True)
+    model = models.CharField(max_length=100, blank=True)
+    fcm_token = models.TextField(blank=True)
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
+    last_seen_at = models.DateTimeField(auto_now=True, db_index=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "user_devices"
+        ordering = ["-last_seen_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "device_id"],
+                name="unique_user_device",
+            )
+        ]
+
+        indexes = [
+            models.Index(fields=["user"]),
+            models.Index(fields=["device_type"]),
+            models.Index(fields=["last_seen_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.user.phone_number} - {self.device_name}"
+
