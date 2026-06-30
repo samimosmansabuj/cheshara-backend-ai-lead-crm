@@ -23,7 +23,6 @@ class BusinessType(models.TextChoices):
     EDUCATION = "EDUCATION", "Education"
     OTHER = "OTHER", "Other"
 
-
 class Industry(models.TextChoices):
     AUTOMOTIVE = "AUTOMOTIVE", "Automotive"
     REAL_ESTATE = "REAL_ESTATE", "Real Estate"
@@ -49,7 +48,6 @@ class Industry(models.TextChoices):
 class PhoneProvider(models.TextChoices):
     TWILIO = "TWILIO", "Twilio"
 
-
 class PhoneNumberStatus(models.TextChoices):
     ACTIVE = "ACTIVE", "Active"
     INACTIVE = "INACTIVE", "Inactive"
@@ -67,6 +65,7 @@ class CountryCode(models.TextChoices):
     GB = "GB", "United Kingdom"
     AU = "AU", "Australia"
     BD = "BD", "Bangladesh"
+
 # ==========================================================
 
 
@@ -78,6 +77,7 @@ class Currency(models.TextChoices):
     GBP = "GBP", "British Pound"
     AUD = "AUD", "Australian Dollar"
     BDT = "BDT", "Bangladeshi Taka"
+
 # ==========================================================
 
 
@@ -115,3 +115,16 @@ class OnboardingStep(models.TextChoices):
     COMPLETED = "COMPLETED"
 
 
+
+class ProviderAccountStatus(models.TextChoices):
+    ACTIVE = "active", "Active"
+    SUSPENDED = "suspended", "Suspended"
+    DISABLED = "disabled", "Disabled"
+    PENDING = "pending", "Pending"
+    FAILED = "failed", "Failed"
+
+
+class AIReplyTone(models.TextChoices):
+    PROFESSIONAL = "professional", "Professional"
+    FRIENDLY = "friendly", "Friendly"
+    CASUAL = "casual", "Casual"

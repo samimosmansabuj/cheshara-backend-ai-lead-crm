@@ -13,7 +13,7 @@ class UserQuerySet(models.QuerySet):
 
     def verified(self):
         return self.filter(
-            is_email_verified=True
+            is_phone_verified=True
         )
 
     def recently_active(self):

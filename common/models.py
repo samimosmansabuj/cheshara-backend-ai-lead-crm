@@ -1,5 +1,4 @@
 from django.db import models
-import uuid
 from .choices import Status
 from .managers import BaseManager
 from django.utils import timezone

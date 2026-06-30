@@ -1,28 +1,17 @@
 from django.db import models
-from django.contrib.auth.models import (
-    AbstractBaseUser,
-    PermissionsMixin,
-)
-
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from common.models import BaseModel
-
-from .choices import (
-    Gender,
-    DeviceType,
-)
-
+from .choices import DeviceType
 from .managers import UserManager
 
 
 class User(AbstractBaseUser, PermissionsMixin, BaseModel):
-    # email = models.EmailField(unique=True, db_index=True)
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100, blank=True)
-    phone_number = models.CharField(max_length=30, blank=True, db_index=True)
+    email = models.EmailField(blank=True, null=True, db_index=True)
+    phone_number = models.CharField(max_length=30, unique=True, db_index=True)
+    full_name = models.CharField(max_length=100, blank=True)
     country_code = models.CharField(max_length=10, blank=True)
     profile_picture = models.ImageField(upload_to="users/profile/", blank=True, null=True)
-    date_of_birth = models.DateField(blank=True, null=True)
-    gender = models.CharField(max_length=30, choices=Gender.choices, blank=True)
+    
     is_email_verified = models.BooleanField(default=False)
     is_phone_verified = models.BooleanField(default=False)
     failed_login_attempts = models.PositiveSmallIntegerField(default=0)
@@ -38,15 +27,11 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         db_table = "users"
         ordering = ["-created_at"]
         indexes = [
-            # models.Index(fields=["email"]),
             models.Index(fields=["phone_number"]),
+            models.Index(fields=["email"]),
             models.Index(fields=["status"]),
             models.Index(fields=["last_activity_at"]),
         ]
-
-    @property
-    def full_name(self):
-        return f"{self.first_name} {self.last_name}".strip()
 
     def __str__(self):
         return self.phone_number
@@ -57,10 +42,12 @@ class Device(BaseModel):
     device_id = models.CharField(max_length=255)
     device_name = models.CharField(max_length=255)
     device_type = models.CharField(max_length=20, choices=DeviceType.choices)
+    
     os_version = models.CharField(max_length=100, blank=True)
     app_version = models.CharField(max_length=50, blank=True)
     manufacturer = models.CharField(max_length=100, blank=True)
     model = models.CharField(max_length=100, blank=True)
+    
     fcm_token = models.TextField(blank=True)
     ip_address = models.GenericIPAddressField(blank=True, null=True)
     last_seen_at = models.DateTimeField(auto_now=True, db_index=True)
