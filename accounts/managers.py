@@ -1,6 +1,10 @@
 from django.contrib.auth.base_user import BaseUserManager
-
 from .querysets import OTPVerificationQuerySet, UserQuerySet
+import hashlib
+import secrets
+from datetime import timedelta
+from django.db import models
+from django.utils import timezone
 
 
 class UserManager(BaseUserManager):
@@ -19,15 +23,6 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         return self.create_user(phone_number, password, **extra_fields )
-
-
-import hashlib
-import secrets
-from datetime import timedelta
-
-from django.db import models
-from django.utils import timezone
-
 
 class OTPVerificationManager(models.Manager):
     def get_queryset(self):
@@ -60,4 +55,11 @@ class OTPVerificationManager(models.Manager):
 
     def latest_active(self, phone_number, purpose):
         return self.get_queryset().active().for_phone(phone_number).for_purpose(purpose).latest().first()
+    
+    def verify_otp(self, phone_number, purpose, otp):
+        otp_obj = self.latest_active(phone_number, purpose)
+        if not otp_obj:
+            return False, "OTP not found."
+
+        return otp_obj.verify(otp)
 

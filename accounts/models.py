@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from common.models import BaseModel
 from .choices import DeviceType, OTPPurpose, LoginMethod, LoginStatus
 from .managers import OTPVerificationManager, UserManager
+from django.utils import timezone
 
 
 class User(AbstractBaseUser, PermissionsMixin, BaseModel):
@@ -94,6 +95,26 @@ class OTPVerification(BaseModel):
             models.Index(fields=["purpose"]),
             models.Index(fields=["expires_at"]),
         ]
+    
+    def verify(self, otp: str):
+        if self.is_used:
+            return False, "OTP already used."
+        if timezone.now() >= self.expires_at:
+            return False, "OTP has expired."
+        if self.attempt_count >= self.max_attempts:
+            return False, "Maximum verification attempts exceeded."
+        
+        hashed_otp = self.__class__.objects.hash_otp(otp)
+        if hashed_otp != self.otp_hash:
+            self.attempt_count += 1
+            self.save(update_fields=["attempt_count"])
+            return False, "Invalid OTP."
+    
+        self.is_used = True
+        self.verified_at = timezone.now()
+        self.save(update_fields=["is_used", "verified_at"])
+
+        return True, "OTP verified successfully."
 
 class LoginHistory(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
