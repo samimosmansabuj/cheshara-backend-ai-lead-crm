@@ -1,8 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from common.models import BaseModel
-from .choices import DeviceType
-from .managers import UserManager
+from .choices import DeviceType, OTPPurpose, LoginMethod, LoginStatus
+from .managers import OTPVerificationManager, UserManager
 
 
 class User(AbstractBaseUser, PermissionsMixin, BaseModel):
@@ -35,7 +35,6 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
 
     def __str__(self):
         return self.phone_number
-
 
 class Device(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="devices")
@@ -71,4 +70,37 @@ class Device(BaseModel):
 
     def __str__(self):
         return f"{self.user.phone_number} - {self.device_name}"
+
+class OTPVerification(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="otp_verifications")
+    phone_number = models.CharField(max_length=30)
+    otp_hash = models.CharField(max_length=255)
+    otp_code = models.CharField(max_length=10, blank=True, null=True)
+    purpose = models.CharField(max_length=30, choices=OTPPurpose.choices)
+    expires_at = models.DateTimeField()
+    verified_at = models.DateTimeField(blank=True, null=True)
+    attempt_count = models.PositiveSmallIntegerField(default=0)
+    max_attempts = models.PositiveSmallIntegerField(default=5)
+    is_used = models.BooleanField(default=False)
+    
+    objects = OTPVerificationManager()
+
+    class Meta:
+        db_table = "otp_verifications"
+
+        indexes = [
+            models.Index(fields=["user"]),
+            models.Index(fields=["phone_number"]),
+            models.Index(fields=["purpose"]),
+            models.Index(fields=["expires_at"]),
+        ]
+
+class LoginHistory(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    phone_number = models.CharField(max_length=30)
+    device = models.ForeignKey(Device, on_delete=models.SET_NULL, null=True, blank=True)
+    ip_address = models.GenericIPAddressField(null=True)
+    login_method = models.CharField(max_length=20, choices=LoginMethod.choices)
+    status = models.CharField(max_length=20, choices=LoginStatus.choices)
+    failure_reason = models.CharField(max_length=100, blank=True)
 
