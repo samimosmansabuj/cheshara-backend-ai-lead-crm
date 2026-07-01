@@ -1,6 +1,6 @@
 from django.db import models
 from .querysets import (
-    OrganizationQuerySet, BusinessProfileQuerySet,
+    OrganizationQuerySet,
     PhoneNumberQuerySet, BusinessSettingQuerySet, ProviderAccountQuerySet
 )
 
@@ -56,19 +56,6 @@ class OrganizationManager(models.Manager.from_queryset(OrganizationQuerySet)):
      # -------------------------
 # ==========================================================
 
-# ==========================================================
-# Business Profile
-class BusinessProfileManager(models.Manager):
-    def get_queryset(self):
-        return BusinessProfileQuerySet(self.model, using=self._db,)
-
-    def complete(self):
-        return self.get_queryset().complete()
-
-    def by_industry(self, industry):
-        return self.get_queryset().by_industry(industry)
-
-# ==========================================================
 
 # ==========================================================
 # Business Setting

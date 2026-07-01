@@ -1,5 +1,10 @@
 from django.db import models
 
+class UserType(models.TextChoices):
+    CLIENT = "CLIENT", "Client"
+    ADMIN = "ADMIN", "Admin"
+    SUPER_ADMIN = "SUPER_ADMIN", "Super Admin"
+
 class DeviceType(models.TextChoices):
     ANDROID = "ANDROID", "Android"
     IOS = "IOS", "iOS"

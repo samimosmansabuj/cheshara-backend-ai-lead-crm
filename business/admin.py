@@ -2,7 +2,6 @@ from django.contrib import admin
 
 from .models import (
     Organization,
-    BusinessProfile,
     BusinessLink,
     BusinessAddress,
     BusinessSetting,
@@ -20,29 +19,38 @@ class BusinessAddressInline(admin.TabularInline):
     model = BusinessAddress
     extra = 0
 
-
 @admin.register(Organization)
 class OrganizationAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "owner", "country", "is_verified", "is_demo", "is_onboarding_completed", "status", "created_at")
-    list_filter = ("country", "is_verified", "is_demo", "is_onboarding_completed", "status", "created_at")
-    search_fields = ("name", "slug", "owner__phone_number", "owner__email")
+    list_display = ("id", "name", "owner", "business_type", "industry", "country", "status", "has_phone_number_display", "primary_phone_display", "lead_count_display", "is_verified", "is_demo", "is_onboarding_completed", "created_at")
+    list_filter = ("status", "country", "business_type", "industry", "is_verified", "is_demo", "is_onboarding_completed", "created_at")
+    search_fields = ("name", "email", "support_email", "website", "owner__phone_number", "owner__email")
     autocomplete_fields = ("owner",)
     list_select_related = ("owner",)
-    readonly_fields = ("slug", "created_at", "updated_at")
+    readonly_fields = ("created_at", "updated_at", "deleted_at")
     ordering = ("-created_at",)
     date_hierarchy = "created_at"
     list_per_page = 25
+    fieldsets = (
+        ("Organization Information", {"fields": ("owner", "name", "status", "country", "logo", "favicon")}),
+        ("Business Information", {"fields": ("business_type", "industry", "description", "website", "email", "support_email", "business_hours")}),
+        ("Onboarding", {"fields": ("is_verified", "is_demo", "is_onboarding_completed", "onboarding_step")}),
+        ("System Information", {"classes": ("collapse",), "fields": ("created_at", "updated_at", "deleted_at")}),
+    )
 
+    @admin.display(boolean=True, description="Has Phone")
+    def has_phone_number_display(self, obj):
+        return obj.has_phone_number
 
-@admin.register(BusinessProfile)
-class BusinessProfileAdmin(admin.ModelAdmin):
-    list_display = ("organization", "business_type", "industry", "website", "created_at")
-    list_filter = ("business_type", "industry")
-    search_fields = ("organization__name", "email", "support_email")
-    autocomplete_fields = ("organization",)
-    list_select_related = ("organization",)
-    inlines = (BusinessLinkInline, BusinessAddressInline)
-    readonly_fields = ("created_at", "updated_at")
+    @admin.display(description="Primary Phone")
+    def primary_phone_display(self, obj):
+        phone = obj.primary_phone
+        if phone:
+            return phone.number
+        return "-"
+
+    @admin.display(description="Leads")
+    def lead_count_display(self, obj):
+        return obj.lead_count
 
 
 @admin.register(BusinessSetting)

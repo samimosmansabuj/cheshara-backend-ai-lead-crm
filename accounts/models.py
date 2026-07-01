@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from common.models import BaseModel
-from .choices import DeviceType, OTPPurpose, LoginMethod, LoginStatus
+from .choices import DeviceType, OTPPurpose, LoginMethod, LoginStatus, UserType
 from .managers import OTPVerificationManager, UserManager
 from django.utils import timezone
 
@@ -12,7 +12,8 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     full_name = models.CharField(max_length=100, blank=True)
     country_code = models.CharField(max_length=10, blank=True)
     profile_picture = models.ImageField(upload_to="users/profile/", blank=True, null=True)
-    
+    user_type = models.CharField(max_length=20, choices=UserType.choices, default=UserType.CLIENT)
+
     is_email_verified = models.BooleanField(default=False)
     is_phone_verified = models.BooleanField(default=False)
     failed_login_attempts = models.PositiveSmallIntegerField(default=0)
@@ -113,7 +114,6 @@ class OTPVerification(BaseModel):
         self.is_used = True
         self.verified_at = timezone.now()
         self.save(update_fields=["is_used", "verified_at"])
-
         return True, "OTP verified successfully."
 
 class LoginHistory(BaseModel):

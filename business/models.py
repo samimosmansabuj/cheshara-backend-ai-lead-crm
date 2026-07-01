@@ -6,7 +6,7 @@ from .choices import (
     OrganizationStatus, CountryCode, OnboardingStep, BusinessType, Industry, ProviderAccountStatus,
     Currency, DateFormat, Language, TimeFormat, AIReplyTone,PhoneProvider, PhoneNumberStatus
 )
-from .managers import OrganizationManager, ProviderAccountManager, BusinessProfileManager, BusinessSettingManager, PhoneNumberManager
+from .managers import OrganizationManager, ProviderAccountManager, BusinessSettingManager, PhoneNumberManager
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -17,10 +17,16 @@ from django.utils import timezone
 class Organization(BaseModel):
     owner = models.OneToOneField(User, on_delete=models.PROTECT, related_name="organization")
     name = models.CharField(max_length=255, db_index=True)
-    slug = models.SlugField(max_length=255, unique=True, db_index=True)
     logo = models.ImageField(upload_to="organizations/logo/", blank=True, null=True)
-    favicon = models.ImageField(upload_to="organizations/favicon/", blank=True, null=True)
     country = models.CharField(max_length=2, choices=CountryCode.choices, default=CountryCode.US, db_index=True)
+    business_type = models.CharField(max_length=30, choices=BusinessType.choices, default=BusinessType.COMPANY, db_index=True)
+    industry = models.CharField(max_length=50, choices=Industry.choices, db_index=True, blank=True, null=True)
+    description = models.TextField(blank=True, default="")
+    website = models.URLField(blank=True, default="")
+    email = models.EmailField(blank=True, default="")
+    support_email = models.EmailField(blank=True, default="")
+    business_hours = models.JSONField(default=dict, blank=True, help_text="Weekly business working hours.")
+    
     is_verified = models.BooleanField(default=False, help_text="Organization verification status.")
     is_demo = models.BooleanField(default=False, help_text="Used for demo/testing organizations.")
     is_onboarding_completed = models.BooleanField(default=False)
@@ -35,7 +41,6 @@ class Organization(BaseModel):
         ordering = ["-created_at",]
 
         indexes = [
-            models.Index(fields=["slug"], name="org_slug_idx"),
             models.Index(fields=["owner"], name="org_owner_idx"),
             models.Index(fields=["status"], name="org_status_idx"),
             models.Index(fields=["created_at"], name="org_created_idx"),
@@ -44,7 +49,6 @@ class Organization(BaseModel):
         ]
 
         constraints = [
-            models.UniqueConstraint(fields=["slug"], name="unique_organization_slug"),
             models.UniqueConstraint(fields=["owner"], name="unique_organization_owner"),
         ]
 
@@ -141,31 +145,6 @@ class Organization(BaseModel):
             f")>"
         )
 
-class BusinessProfile(BaseModel):
-    organization = models.OneToOneField("business.Organization", on_delete=models.CASCADE, related_name="business_profile")
-    business_type = models.CharField(max_length=30, choices=BusinessType.choices, default=BusinessType.COMPANY, db_index=True)
-    industry = models.CharField(max_length=50, choices=Industry.choices, db_index=True)
-    description = models.TextField(blank=True, default="")
-    website = models.URLField(blank=True, default="")
-    email = models.EmailField(blank=True, default="")
-    support_email = models.EmailField(blank=True, default="")
-    business_hours = models.JSONField(default=dict, blank=True, help_text="Weekly business working hours.")
-
-    objects = BusinessProfileManager()
-
-    class Meta:
-        db_table = "business_profiles"
-        verbose_name = "Business Profile"
-        verbose_name_plural = "Business Profiles"
-        ordering = ["organization__name"]
-        indexes = [
-            models.Index(fields=["industry"], name="bp_industry_idx"),
-            models.Index(fields=["business_type"], name="bp_business_type_idx"),
-        ]
-
-    def __str__(self):
-        return self.organization.name
-
     def clean(self):
         super().clean()
         if self.website:
@@ -180,12 +159,12 @@ class BusinessProfile(BaseModel):
         return bool(self.business_hours)
 
 class BusinessLink(BaseModel):
-    business_profile = models.ForeignKey(BusinessProfile, on_delete=models.CASCADE, related_name="links")
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="links", blank=True, null=True)
     title = models.CharField(max_length=50)
     url = models.URLField(max_length=255)
 
 class BusinessAddress(BaseModel):
-    business_profile = models.ForeignKey(BusinessProfile, on_delete=models.CASCADE, related_name="addresss")
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="addresses", blank=True, null=True)
     address_line_1 = models.CharField(max_length=255)
     address_line_2 = models.CharField(max_length=255, blank=True, default="")
     city = models.CharField(max_length=100, blank=True)
