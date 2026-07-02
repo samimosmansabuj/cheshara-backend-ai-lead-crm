@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from .models import (
-    Notification, AuditLog, SystemSetting, APIKey,
+    BusinessType, Notification, AuditLog, SystemSetting, APIKey, Industry
 )
 
 
@@ -63,3 +63,6 @@ class APIKeyAdmin(admin.ModelAdmin):
     list_per_page = 25
 
 
+
+admin.site.register(BusinessType)
+admin.site.register(Industry)

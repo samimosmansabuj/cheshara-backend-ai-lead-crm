@@ -1,7 +1,7 @@
 from django.db import models
 from common.models import BaseModel
 from .choices import (
-    ConversationStatus, MessageDirection, MessageStatus, MessageType, SentimentType, IntentType, HandoffReason, ProviderType, QueueStatus
+    ConversationStatus, MessageDirection, MessageStatus, MessageType, SentimentType, IntentType, HandoffReason, ProviderType, QueueStatus, MessageTemplateType
 )
 from .managers import ConversationManager, MessageManager, AIAnalysisManager
 
@@ -155,20 +155,24 @@ class OutboundMessageQueue(BaseModel):
             models.Index(fields=["scheduled_at"]),
         ]
 
-class MessageTemplate(BaseModel):
+
+class StaticMessageTemplate(BaseModel):
+    user = models.ForeignKey("accounts.User", on_delete=models.CASCADE, related_name="message_templates")
     organization = models.ForeignKey("business.Organization", on_delete=models.CASCADE, related_name="message_templates")
-    name = models.CharField(max_length=100)
-    category = models.CharField(max_length=50)
-    content = models.TextField()
+    template_type = models.CharField(max_length=40, choices=MessageTemplateType.choices, db_index=True)
+    subject = models.CharField(max_length=255, blank=True)
+    message = models.TextField()
+    is_default = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
-    variables = models.JSONField(default=list, blank=True)
-
+    
     class Meta:
-        db_table = "communication_message_templates"
-
         constraints = [
             models.UniqueConstraint(
-                fields=["organization", "name"], condition=models.Q(is_deleted=False), name="unique_message_template"
-            ),
+                fields=["organization", "user", "template_type"],
+                condition=models.Q(is_deleted=False),
+                name="unique_static_template",
+            )
         ]
 
+    def __str__(self):
+        return f"{self.organization.name} - {self.template_type}"

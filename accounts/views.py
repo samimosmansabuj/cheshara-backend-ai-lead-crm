@@ -1,5 +1,5 @@
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import (
@@ -12,7 +12,9 @@ from .serializers import (
     AdminLoginSerializer,
     ClientSendOTPSerializer,
     ClientVerifyOTPSerializer,
+    CurrentUserSerializer,
 )
+from django.db import transaction
 
 
 class ClientSendOTPAPIView(APIView):
@@ -22,7 +24,7 @@ class ClientSendOTPAPIView(APIView):
         serializer = ClientSendOTPSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         phone = serializer.validated_data["phone_number"].strip()
-        user, _ = User.objects.get_or_create(phone_number=phone)
+        user, created = User.objects.get_or_create(phone_number=phone)
         OTPVerification.objects.create_otp(
             user=user,
             phone_number=phone,
@@ -35,7 +37,10 @@ class ClientSendOTPAPIView(APIView):
             {
                 "success": True,
                 "message": "OTP sent successfully.",
-                "data": None,
+                "data": {
+                    "phone_number": user.phone_number,
+                    "is_new_user": created
+                }
             },
             status=status.HTTP_200_OK,
         )
@@ -54,6 +59,7 @@ class ClientVerifyOTPAPIView(APIView):
                 "data": {
                     "access": result["access"],
                     "refresh": result["refresh"],
+                    "business_profile_exists": True if hasattr(result["user"], "organization") else False,
                     "user": {
                         "id": result["user"].id,
                         "phone_number": result["user"].phone_number,
@@ -113,14 +119,65 @@ class CustomTokenVerifyView(TokenVerifyView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         return Response(
             {
                 "success": True,
                 "message": "Token is valid.",
-                "data": None,
             },
             status=status.HTTP_200_OK,
         )
 
+
+
+
+class CurrentUserAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get_user(self, request):
+        id = request.user.pk
+        user = (
+            User.objects
+            .select_related("organization")
+            .get(pk=id)
+        )
+        return user
+
+    def get(self, request):
+        user = self.get_user(request)
+        serializer = CurrentUserSerializer(user, context={"request": request})
+        return Response(
+            {
+                "success": True,
+                "message": "User data retrieved successfully.",
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @transaction.atomic
+    def delete(self, request):
+        user = self.get_user(request)
+        user.delete()
+        return Response(
+            {
+                "success": True,
+                "message": "User account deleted successfully.",
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @transaction.atomic
+    def patch(self, request):
+        user = self.get_user(request)
+        serializer = CurrentUserSerializer(user, data=request.data, partial=True, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            {
+                "success": True,
+                "message": "User data updated successfully.",
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
 

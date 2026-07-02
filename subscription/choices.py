@@ -13,6 +13,7 @@ class BillingType(models.TextChoices):
 
 class SubscriptionStatus(models.TextChoices):
     TRIAL = "trial", "Trial"
+    AWAITING_PAYMENT = "awaiting_payment", "Awaiting Payment"
     ACTIVE = "active", "Active"
     PAST_DUE = "past_due", "Past Due"
     CANCELLED = "cancelled", "Cancelled"

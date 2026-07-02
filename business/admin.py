@@ -7,6 +7,7 @@ from .models import (
     BusinessSetting,
     ProviderAccount,
     PhoneNumber,
+    UserNotificationSettings,
 )
 
 
@@ -84,4 +85,16 @@ class PhoneNumberAdmin(admin.ModelAdmin):
     ordering = ("-created_at",)
     date_hierarchy = "created_at"
 
+
+@admin.register(UserNotificationSettings)
+class UserNotificationSettingsAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "organization", "all_notification", "push_notification_enabled", "email_alert_enabled", "sms_alert_enabled", "instant_lead_alert", "weekly_performance_report", "created_at")
+    list_filter = ("all_notification", "push_notification_enabled", "email_alert_enabled", "sms_alert_enabled", "instant_lead_alert", "weekly_performance_report", "created_at")
+    search_fields = ("user__phone_number", "user__email", "user__full_name", "organization__name")
+    autocomplete_fields = ("user", "organization")
+    list_select_related = ("user", "organization")
+    readonly_fields = ("created_at", "updated_at")
+    ordering = ("-created_at",)
+    date_hierarchy = "created_at"
+    list_per_page = 25
 

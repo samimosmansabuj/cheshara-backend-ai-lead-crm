@@ -78,3 +78,36 @@ class HandoffReason(models.TextChoices):
     AI_FAILED = "ai_failed", "AI Failed"
     MANUAL = "manual", "Manual"
 
+
+
+class MessageTemplateType(models.TextChoices):
+    WELCOME = "WELCOME", "Welcome Message"
+    THANK_YOU = "THANK_YOU", "Thank You Message"
+
+    FOLLOW_UP_1 = "FOLLOW_UP_1", "Follow-up #1"
+    FOLLOW_UP_2 = "FOLLOW_UP_2", "Follow-up #2"
+    FOLLOW_UP_3 = "FOLLOW_UP_3", "Follow-up #3"
+
+    APPOINTMENT_CONFIRMATION = "APPOINTMENT_CONFIRMATION", "Appointment Confirmation"
+    APPOINTMENT_REMINDER = "APPOINTMENT_REMINDER", "Appointment Reminder"
+
+    PAYMENT_REMINDER = "PAYMENT_REMINDER", "Payment Reminder"
+    PAYMENT_CONFIRMATION = "PAYMENT_CONFIRMATION", "Payment Confirmation"
+
+    QUOTATION = "QUOTATION", "Quotation Message"
+    INVOICE = "INVOICE", "Invoice Message"
+
+    ORDER_CONFIRMATION = "ORDER_CONFIRMATION", "Order Confirmation"
+    ORDER_SHIPPED = "ORDER_SHIPPED", "Order Shipped"
+    ORDER_DELIVERED = "ORDER_DELIVERED", "Order Delivered"
+
+    MISSED_CALL = "MISSED_CALL", "Missed Call Reply"
+
+    OUT_OF_OFFICE = "OUT_OF_OFFICE", "Out of Office"
+    BUSINESS_HOURS = "BUSINESS_HOURS", "Business Hours"
+
+    FEEDBACK_REQUEST = "FEEDBACK_REQUEST", "Feedback Request"
+    REVIEW_REQUEST = "REVIEW_REQUEST", "Review Request"
+
+    CUSTOM = "CUSTOM", "Custom"
+

@@ -1,11 +1,12 @@
+from django.core.exceptions import ValidationError
 from django.db import models
-from django.utils.text import slugify
 from common.models import BaseModel
 from accounts.models import User
 from .choices import (
-    OrganizationStatus, CountryCode, OnboardingStep, BusinessType, Industry, ProviderAccountStatus,
+    OrganizationStatus, CountryCode, OnboardingStep, ProviderAccountStatus,
     Currency, DateFormat, Language, TimeFormat, AIReplyTone,PhoneProvider, PhoneNumberStatus
 )
+from core.models import BusinessType, Industry
 from .managers import OrganizationManager, ProviderAccountManager, BusinessSettingManager, PhoneNumberManager
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -15,16 +16,17 @@ from django.utils import timezone
 
 
 class Organization(BaseModel):
-    owner = models.OneToOneField(User, on_delete=models.PROTECT, related_name="organization")
+    owner = models.OneToOneField(User, on_delete=models.CASCADE, related_name="organization")
     name = models.CharField(max_length=255, db_index=True)
     logo = models.ImageField(upload_to="organizations/logo/", blank=True, null=True)
     country = models.CharField(max_length=2, choices=CountryCode.choices, default=CountryCode.US, db_index=True)
-    business_type = models.CharField(max_length=30, choices=BusinessType.choices, default=BusinessType.COMPANY, db_index=True)
-    industry = models.CharField(max_length=50, choices=Industry.choices, db_index=True, blank=True, null=True)
+
+    business_type = models.ForeignKey(BusinessType, on_delete=models.PROTECT, related_name="organizations", blank=True, null=True)
+    industry = models.ForeignKey(Industry, on_delete=models.PROTECT, related_name="organizations", blank=True, null=True)
+
     description = models.TextField(blank=True, default="")
     website = models.URLField(blank=True, default="")
     email = models.EmailField(blank=True, default="")
-    support_email = models.EmailField(blank=True, default="")
     business_hours = models.JSONField(default=dict, blank=True, help_text="Weekly business working hours.")
     
     is_verified = models.BooleanField(default=False, help_text="Organization verification status.")
@@ -54,13 +56,7 @@ class Organization(BaseModel):
 
     def __str__(self):
         return self.name
-
-    @property
-    def logo_url(self):
-        if self.logo:
-            return self.logo.url
-        return None
-    
+        
     @property
     def is_active(self):
         return (
@@ -98,18 +94,6 @@ class Organization(BaseModel):
     
     def save(self, *args, **kwargs):
         self.full_clean()
-        if not self.slug:
-            base_slug = slugify(self.name)
-            slug = base_slug
-            counter = 1
-            while Organization.objects.with_deleted().filter(
-                slug=slug
-            ).exclude(
-                pk=self.pk
-            ).exists():
-                slug = f"{base_slug}-{counter}"
-                counter += 1
-            self.slug = slug
         super().save(*args, **kwargs)
 
     def complete_onboarding(self):
@@ -151,8 +135,6 @@ class Organization(BaseModel):
             self.website = self.website.strip()
         if self.email:
             self.email = self.email.lower().strip()
-        if self.support_email:
-            self.support_email = self.support_email.lower().strip()
 
     @property
     def has_business_hours(self):
@@ -178,7 +160,8 @@ class BusinessAddress(BaseModel):
         return ", ".join(part for part in parts if part)
 
 class BusinessSetting(BaseModel):
-    organization = models.OneToOneField("business.Organization", on_delete=models.CASCADE, related_name="settings")
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="business_settings", blank=True, null=True)
+    organization = models.OneToOneField("business.Organization", on_delete=models.CASCADE, related_name="settings", blank=True, null=True)
     language = models.CharField(max_length=10, choices=Language.choices, default=Language.ENGLISH)
     timezone = models.CharField(max_length=100, default="America/New_York")
     currency = models.CharField(max_length=10, choices=Currency.choices, default=Currency.USD)
@@ -186,7 +169,7 @@ class BusinessSetting(BaseModel):
     time_format = models.CharField(max_length=10, choices=TimeFormat.choices, default=TimeFormat.HOUR_12)
     lead_hot_score = models.PositiveSmallIntegerField(default=80, validators=[MinValueValidator(1), MaxValueValidator(100)], help_text="Minimum AI score to consider a lead as HOT.")
     
-    reply_tone = models.CharField(max_length=50, choices=AIReplyTone.choices, default=AIReplyTone.FRIENDLY)
+    reply_tone = models.CharField(max_length=50, choices=AIReplyTone.choices, default=AIReplyTone.FRIENDLY, help_text="Tone of AI-generated replies. (e.g., friendly, professional, casual)")
     auto_reply_enabled = models.BooleanField(default=True)
     reply_speed = models.PositiveBigIntegerField(default=0)
     auto_follow_up = models.BooleanField(default=True)
@@ -292,4 +275,33 @@ class PhoneNumber(BaseModel):
     @property
     def voice_enabled(self):
         return self.capabilities.get("voice", False)
+
+class UserNotificationSettings(BaseModel):
+    user = models.OneToOneField("accounts.User", on_delete=models.CASCADE, related_name="user_notification_setting", blank=True, null=True)
+    organization = models.OneToOneField("business.Organization", on_delete=models.CASCADE, related_name="user_notification_setting", blank=True, null=True)
+    
+    all_notification = models.BooleanField(default=True)
+    push_notification_enabled = models.BooleanField(default=True)
+    email_alert_enabled = models.BooleanField(default=True)
+    sms_alert_enabled = models.BooleanField(default=False)
+    instant_lead_alert = models.BooleanField(default=True)
+    weekly_performance_report = models.BooleanField(default=True)
+    
+    def clean(self):
+        if not self.user and not self.organization:
+            raise ValidationError("Either user or organization must be selected.")
+        if self.user and self.organization:
+            raise ValidationError("Only one of user or organization can be selected.")
+    
+    def save(self, *args, **kwargs):
+        if self.all_notification:
+            self.push_notification_enabled = True
+            self.email_alert_enabled = True
+            self.sms_alert_enabled = True
+            self.instant_lead_alert = True
+            self.weekly_performance_report = True
+        return super().save(*args, **kwargs)
+
+
+
 

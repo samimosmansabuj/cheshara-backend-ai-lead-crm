@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from .models import (
     Conversation, Message, MessageAttachment,
-    AIAnalysis, HandoffEvent, WebhookEvent, OutboundMessageQueue, MessageTemplate,
+    AIAnalysis, HandoffEvent, WebhookEvent, OutboundMessageQueue, StaticMessageTemplate,
 )
 
 
@@ -140,17 +140,23 @@ class OutboundMessageQueueAdmin(admin.ModelAdmin):
         return False
 
 
-@admin.register(MessageTemplate)
-class MessageTemplateAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "organization", "category", "is_active", "created_at")
-    list_filter = ("category", "is_active", "created_at")
-    search_fields = ("name", "content", "organization__name")
-    autocomplete_fields = ("organization",)
-    list_select_related = ("organization",)
+@admin.register(StaticMessageTemplate)
+class StaticMessageTemplateAdmin(admin.ModelAdmin):
+    list_display = ("id", "template_type", "organization", "user", "subject", "is_default", "is_active", "created_at")
+    list_filter = ("template_type", "is_default", "is_active", "created_at")
+    search_fields = ("subject", "message", "user__phone_number", "user__email", "user__full_name", "organization__name")
+    autocomplete_fields = ("user", "organization")
+    list_select_related = ("user", "organization")
     readonly_fields = ("created_at", "updated_at")
-    ordering = ("name",)
+    ordering = ("template_type", "organization__name")
     date_hierarchy = "created_at"
     list_per_page = 25
+    fieldsets = (
+        ("Template Information", {"fields": ("template_type", "subject", "message")}),
+        ("Assignment", {"fields": ("organization", "user")}),
+        ("Status", {"fields": ("is_default", "is_active")}),
+        ("System Information", {"classes": ("collapse",), "fields": ("created_at", "updated_at")}),
+    )
 
 
 

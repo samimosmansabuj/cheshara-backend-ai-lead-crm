@@ -48,7 +48,7 @@ class DeviceAdmin(admin.ModelAdmin):
 
 @admin.register(OTPVerification)
 class OTPVerificationAdmin(admin.ModelAdmin):
-    list_display = ("id", "user", "phone_number", "purpose", "attempt_count", "is_used", "expires_at", "verified_at", "created_at")
+    list_display = ("id", "user", "otp_code", "phone_number", "purpose", "attempt_count", "is_used", "expires_at", "verified_at", "created_at")
     list_filter = ("purpose", "is_used", "created_at")
     search_fields = ("phone_number", "user__phone_number", "user__email")
     autocomplete_fields = ("user",)

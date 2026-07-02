@@ -3,6 +3,7 @@ from .views import (
     ClientSendOTPAPIView,
     ClientVerifyOTPAPIView,
     AdminLoginAPIView,
+    CurrentUserAPIView,
     CustomTokenRefreshView,
     CustomTokenVerifyView,
 )
@@ -13,4 +14,6 @@ urlpatterns = [
     path("admin/auth/login/", AdminLoginAPIView.as_view(), name="admin-auth-login"),
     path("auth/token/refresh/", CustomTokenRefreshView.as_view(), name="token-refresh"),
     path("auth/token/verify/", CustomTokenVerifyView.as_view(), name="token-verify"),
+    
+    path("me/", CurrentUserAPIView.as_view(), name="user-info"),
 ]

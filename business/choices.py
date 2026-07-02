@@ -128,3 +128,5 @@ class AIReplyTone(models.TextChoices):
     PROFESSIONAL = "professional", "Professional"
     FRIENDLY = "friendly", "Friendly"
     CASUAL = "casual", "Casual"
+
+

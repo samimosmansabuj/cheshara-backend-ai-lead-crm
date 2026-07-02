@@ -46,3 +46,33 @@ class APIKey(BaseModel):
     is_active = models.BooleanField(default=True)
 
 
+class BusinessType(BaseModel):
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=120, unique=True)
+    description = models.TextField(blank=True)
+
+    is_active = models.BooleanField(default=True)
+    sort_order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["sort_order", "name"]
+        verbose_name = "Business Type"
+        verbose_name_plural = "Business Types"
+
+    def __str__(self):
+        return self.name
+
+class Industry(BaseModel):
+    name = models.CharField(max_length=150, unique=True)
+    slug = models.SlugField(max_length=170, unique=True)
+    description = models.TextField(blank=True)
+
+    is_active = models.BooleanField(default=True)
+    sort_order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["sort_order", "name"]
+
+    def __str__(self):
+        return self.name
+

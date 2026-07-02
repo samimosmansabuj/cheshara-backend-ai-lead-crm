@@ -24,7 +24,7 @@ class UserSubscriptionAdmin(admin.ModelAdmin):
     search_fields = ("organization__name", "plan__name")
     autocomplete_fields = ("organization", "plan")
     list_select_related = ("organization", "plan")
-    readonly_fields = ("created_at", "updated_at")
+    readonly_fields = ("uuid", "created_at", "updated_at")
     ordering = ("-start_date",)
     date_hierarchy = "start_date"
     list_per_page = 25
@@ -32,8 +32,8 @@ class UserSubscriptionAdmin(admin.ModelAdmin):
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
-    list_display = ("id", "subscription", "transaction_id", "payment_provider", "amount", "currency", "status", "paid_at")
-    list_filter = ("payment_provider", "status", "currency", "created_at")
+    list_display = ("id", "subscription", "transaction_id", "amount", "currency", "status", "paid_at")
+    list_filter = ("status", "currency", "created_at")
     search_fields = ("transaction_id", "subscription__organization__name")
     autocomplete_fields = ("subscription",)
     list_select_related = ("subscription",)
@@ -42,14 +42,14 @@ class PaymentAdmin(admin.ModelAdmin):
     date_hierarchy = "created_at"
     list_per_page = 25
 
-    def has_add_permission(self, request):
-        return False
+    # def has_add_permission(self, request):
+    #     return False
 
-    def has_change_permission(self, request, obj=None):
-        return False
+    # def has_change_permission(self, request, obj=None):
+    #     return False
 
-    def has_delete_permission(self, request, obj=None):
-        return False
+    # def has_delete_permission(self, request, obj=None):
+    #     return False
 
 
 @admin.register(Invoice)
