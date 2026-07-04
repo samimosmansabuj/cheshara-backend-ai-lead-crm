@@ -69,3 +69,23 @@ class VerifyPurchaseSerializer(serializers.Serializer):
     purchase_token = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     receipt_data = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     package_name = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
+    def validate_subscription_plan_uuid(self, value):
+        subscription = UserSubscription.objects.get(uuid=value)
+        if subscription:
+            return subscription
+        else: raise serializers.ValidationError("User Subscription not found.")
+
+    # def validate(self, attrs):
+    #     platform = attrs["platform"]
+    #     if platform == PURCHASE_PLATFORM.ANDROID:
+    #         if not attrs.get("purchase_token"):
+    #             raise serializers.ValidationError({
+    #                 "purchase_token": "Required for Android."
+    #             })
+    #     elif platform == PURCHASE_PLATFORM.IOS:
+    #         if not attrs.get("receipt_data"):
+    #             raise serializers.ValidationError({
+    #                 "receipt_data": "Required for iOS."
+    #             })
+    #     return attrs

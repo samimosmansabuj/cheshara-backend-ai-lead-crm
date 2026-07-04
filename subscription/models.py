@@ -38,7 +38,7 @@ class UserSubscription(BaseModel):
     user = models.ForeignKey("accounts.User", on_delete=models.CASCADE, related_name="subscriptions", blank=True, null=True)
     organization = models.ForeignKey("business.Organization", on_delete=models.CASCADE, related_name="subscription")
     plan = models.ForeignKey(SubscriptionPlan, on_delete=models.PROTECT, related_name="subscriptions")
-    status = models.CharField(max_length=20, choices=SubscriptionStatus.choices, default=SubscriptionStatus.ACTIVE, db_index=True)
+    status = models.CharField(max_length=20, choices=SubscriptionStatus.choices, default=SubscriptionStatus.AWAITING_PAYMENT, db_index=True)
     billing_cycle = models.CharField(max_length=20, choices=BillingCycle.choices)
     start_date = models.DateTimeField()
     end_date = models.DateTimeField(null=True, blank=True)
@@ -70,8 +70,7 @@ class Invoice(BaseModel):
 
 class PurchaseInfo(BaseModel):
     user = models.ForeignKey("accounts.User", on_delete=models.CASCADE, related_name="purchase_info")
-    subscription = models.ForeignKey(UserSubscription, on_delete=models.SET_NULL, null=True, blank=True, related_name="purchase_info")
-    payment = models.ForeignKey(Payment, on_delete=models.SET_NULL, null=True, blank=True, related_name="purchase_info")
+    payment = models.OneToOneField(Payment, on_delete=models.SET_NULL, null=True, blank=True, related_name="purchase_info")
     
     platform = models.CharField(max_length=20, choices=PurchasePlatform.choices)
     product_id = models.CharField(max_length=100, blank=True, null=True)
