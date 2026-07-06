@@ -21,7 +21,7 @@ class UserAdmin(BaseUserAdmin):
         ("Basic Information", {"fields": ("phone_number", "email", "full_name", "country_code", "profile_picture")}),
         ("Verification", {"fields": ("is_phone_verified", "is_email_verified")}),
         ("Authentication", {"fields": ("password", "last_login", "failed_login_attempts", "last_password_changed_at")}),
-        ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
+        ("Permissions", {"fields": ("is_staff", "is_superuser", "groups", "user_permissions")}),
         ("System", {"fields": ("status", "last_activity_at", "created_at", "updated_at")}),
     )
     add_fieldsets = (
