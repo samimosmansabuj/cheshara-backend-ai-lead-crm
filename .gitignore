@@ -31,8 +31,7 @@ stderr.log
 
 public/
 tmp/
+env/
 restart.txt
 
 Documents.txt
-dummy_data.json
-# *.txt
