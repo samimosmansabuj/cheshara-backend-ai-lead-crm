@@ -70,8 +70,8 @@ class PurchaseInfoAdmin(admin.ModelAdmin):
     list_display = ("id", "user", "platform", "transaction_id", "is_active", "expires_at", "created_at")
     list_filter = ("platform", "is_active", "created_at")
     search_fields = ("transaction_id", "original_transaction_id", "product_id", "user__phone_number", "user__email")
-    autocomplete_fields = ("user", "subscription")
-    list_select_related = ("user", "subscription")
+    autocomplete_fields = ("user", "payment")
+    list_select_related = ("user", "payment")
     readonly_fields = [field.name for field in PurchaseInfo._meta.fields]
     ordering = ("-created_at",)
     date_hierarchy = "created_at"

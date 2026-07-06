@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import (
-    Organization, BusinessSetting
+    Organization, BusinessSetting, UserNotificationSettings
 )
 from django.db import transaction
 
@@ -63,5 +63,11 @@ class OrganizationSerializer(serializers.ModelSerializer):
         if request:
             return request.build_absolute_uri(obj.logo.url)
         return obj.logo.url
+
+class UserNotificationSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserNotificationSettings
+        fields = ("id", "all_notification", "push_notification_enabled", "email_alert_enabled", "sms_alert_enabled", "instant_lead_alert", "weekly_performance_report")
+        read_only_fields = ("id",)
 
 

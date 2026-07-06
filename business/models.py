@@ -293,14 +293,14 @@ class UserNotificationSettings(BaseModel):
         if self.user and self.organization:
             raise ValidationError("Only one of user or organization can be selected.")
     
-    def save(self, *args, **kwargs):
-        if self.all_notification:
-            self.push_notification_enabled = True
-            self.email_alert_enabled = True
-            self.sms_alert_enabled = True
-            self.instant_lead_alert = True
-            self.weekly_performance_report = True
-        return super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     # if self.all_notification:
+    #     #     self.push_notification_enabled = True
+    #     #     self.email_alert_enabled = True
+    #     #     self.sms_alert_enabled = True
+    #     #     self.instant_lead_alert = True
+    #     #     self.weekly_performance_report = True
+    #     return super().save(*args, **kwargs)
 
 
 

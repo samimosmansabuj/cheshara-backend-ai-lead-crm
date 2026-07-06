@@ -1,5 +1,5 @@
 from core.utils.viewsets import OwnModelViewSet, OwnReadOnlyModelViewSet
-from .models import SubscriptionPlan, UserSubscription
+from .models import SubscriptionPlan, UserSubscription, PurchaseInfo
 from core.permissions import AdminWritePermission
 from .serializers import SubscriptionPlanSerializer, PurchaseSubscriptionSerializer, UserSubscriptionSerializer, VerifyPurchaseSerializer
 from rest_framework.decorators import action
@@ -7,9 +7,12 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from core.permissions import IsClientUser
+from .choices import SubscriptionStatus, PaymentStatus
 from django.db.models import Q
+from rest_framework.exceptions import ValidationError
 from subscription.services.purchase import SubscriptionPurchaseService, SubscriptionValidationService
 from django.db import transaction
+from django.utils import timezone
 
 
 class SubscriptionPlanViewSet(OwnModelViewSet):
@@ -81,31 +84,42 @@ class UserSubscriptionViewSet(OwnReadOnlyModelViewSet):
 
     @action(detail=False, methods=["post"], url_path="purchase-verify")
     def purchase_verify(self, request):
-        serializer = VerifyPurchaseSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            serializer = VerifyPurchaseSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            
+            subscription = serializer.validated_data["subscription_plan_uuid"]
+            platform = serializer.validated_data["platform"]
+            purchase_token = serializer.validated_data["purchase_token"]
+            
+            if subscription.status != SubscriptionStatus.AWAITING_PAYMENT:
+                raise ValidationError("Subscription is already processed")
 
-        subscription = serializer.validated_data["subscription"]
+            payment = subscription.payments.latest("created_at")
+            payment.status = PaymentStatus.SUCCEEDED
+            payment.paid_at = timezone.now()
+            payment.save(update_fields=["status", "paid_at"])
 
-        if subscription.status != SubscriptionStatus.AWAITING_PAYMENT:
-            raise ValidationError({"detail": "Subscription is already processed."})
+            subscription.status = SubscriptionStatus.ACTIVE
+            subscription.save(update_fields=["status"])
 
-        payment = subscription.payments.latest("created_at")
-
-        payment.status = PaymentStatus.SUCCESS
-        payment.paid_at = timezone.now()
-        payment.save(update_fields=["status", "paid_at"])
-
-        subscription.status = SubscriptionStatus.ACTIVE
-        subscription.save(update_fields=["status"])
-
-        return Response(
-            {
-                "success": True,
-                "message": "Subscription activated successfully.",
-                "data": UserSubscriptionSerializer(subscription).data,
-            },
-            status=status.HTTP_200_OK,
-        )
+            purchase_info, created = PurchaseInfo.objects.get_or_create(
+                payment=payment,
+                defaults={
+                    "user": self.request.user,
+                    "platform": platform,
+                    "purchase_token": purchase_token
+                }
+            )
+            
+            return Response(
+                {
+                    "success": True,
+                    "message": "Subscription activated successfully.",
+                    "data": UserSubscriptionSerializer(subscription).data,
+                },
+                status=status.HTTP_200_OK,
+            )
 
     # @action(detail=True, methods=["delete"])
     # def remove(self, request, pk=None):
