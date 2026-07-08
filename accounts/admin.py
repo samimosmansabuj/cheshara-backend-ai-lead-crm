@@ -10,8 +10,8 @@ from .models import (
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    list_display = ("id", "phone_number", "email", "full_name", "is_phone_verified", "is_email_verified", "is_staff", "is_superuser", "status", "last_activity_at", "created_at")
-    list_filter = ("is_staff", "is_superuser", "is_phone_verified", "is_email_verified", "status", "created_at")
+    list_display = ("id", "phone_number", "email", "full_name", "is_phone_verified", "is_staff", "is_superuser", "status", "last_activity_at", "created_at")
+    list_filter = ("is_staff", "is_superuser", "is_phone_verified", "status", "created_at")
     search_fields = ("phone_number", "email", "full_name")
     ordering = ("-created_at",)
     list_per_page = 25
@@ -19,7 +19,7 @@ class UserAdmin(BaseUserAdmin):
     readonly_fields = ("last_login", "last_activity_at", "last_password_changed_at", "created_at", "updated_at")
     fieldsets = (
         ("Basic Information", {"fields": ("phone_number", "email", "full_name", "country_code", "profile_picture")}),
-        ("Verification", {"fields": ("is_phone_verified", "is_email_verified")}),
+        ("Verification", {"fields": ("is_phone_verified",)}),
         ("Authentication", {"fields": ("password", "last_login", "failed_login_attempts", "last_password_changed_at")}),
         ("Permissions", {"fields": ("is_staff", "is_superuser", "groups", "user_permissions")}),
         ("System", {"fields": ("status", "last_activity_at", "created_at", "updated_at")}),

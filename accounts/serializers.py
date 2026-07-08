@@ -78,6 +78,6 @@ class AdminLoginSerializer(serializers.Serializer):
 class CurrentUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("id", "phone_number", "email", "full_name", "country_code", "profile_picture", "user_type", "is_email_verified", "is_phone_verified", "last_activity_at")
+        fields = ("id", "phone_number", "email", "full_name", "country_code", "profile_picture", "user_type", "is_phone_verified", "last_activity_at")
 
 

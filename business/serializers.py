@@ -70,4 +70,15 @@ class UserNotificationSettingsSerializer(serializers.ModelSerializer):
         fields = ("id", "all_notification", "push_notification_enabled", "email_alert_enabled", "sms_alert_enabled", "instant_lead_alert", "weekly_performance_report")
         read_only_fields = ("id",)
 
+class NotificationToggleSerializer(serializers.Serializer):
+    NOTIFICATION_FIELDS = (
+        "push_notification_enabled",
+        "email_alert_enabled",
+        "sms_alert_enabled",
+        "instant_lead_alert",
+        "weekly_performance_report",
+    )
+
+    field = serializers.ChoiceField(choices=NOTIFICATION_FIELDS)
+    value = serializers.BooleanField()
 

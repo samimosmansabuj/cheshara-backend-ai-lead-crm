@@ -8,7 +8,7 @@ from rest_framework.viewsets import GenericViewSet
 from .serializers import (
     OrganizationSetupSerializer, UpdateBusinessSettingSerializer, OrganizationSerializer, UserNotificationSettingsSerializer,
 
-    UserNotificationSettings,
+    UserNotificationSettings, NotificationToggleSerializer
 )
 from .choices import OnboardingStep
 from django.db import transaction
@@ -127,9 +127,16 @@ class UserNotificationSettingsViewSet(GenericViewSet):
     permission_classes = [IsAuthenticated, IsClientUser]
 
     def get_object(self):
-        return UserNotificationSettings.objects.get(
-            user=self.request.user
-        )
+        organization = self.request.user.organization
+        if organization:
+            user_notification, _ = UserNotificationSettings.objects.get_or_create(
+                user=self.request.user, organization=organization
+            )
+        else:
+            user_notification, _ = UserNotificationSettings.objects.get_or_create(
+                user=self.request.user
+            )
+        return user_notification
 
     @action(detail=False, methods=["get"], url_path="current")
     def current(self, request):
@@ -144,22 +151,16 @@ class UserNotificationSettingsViewSet(GenericViewSet):
     @action(detail=False, methods=["patch"], url_path="all-notification")
     def update_all_notification(self, request):
         setting = self.get_object()
-        status = request.data.get("status")
-        if status is None:
-            return Response(
-                {
-                    "success": False,
-                    "detail": "status is required."
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        setting.all_notification = bool(status)
-        setting.push_notification_enabled = bool(status)
-        setting.email_alert_enabled = bool(status)
-        setting.sms_alert_enabled = bool(status)
-        setting.instant_lead_alert = bool(status)
-        setting.weekly_performance_report = bool(status)
+        serializer = self.get_serializer(setting, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        all_notification = serializer.validated_data.get("all_notification")
+        
+        setting.all_notification = all_notification
+        setting.push_notification_enabled = all_notification
+        setting.email_alert_enabled = all_notification
+        setting.sms_alert_enabled = all_notification
+        setting.instant_lead_alert = all_notification
+        setting.weekly_performance_report = all_notification
         setting.save()
 
         return Response(
@@ -172,21 +173,16 @@ class UserNotificationSettingsViewSet(GenericViewSet):
 
     @action(detail=False, methods=["patch"], url_path="toggle")
     def toggle(self, request):
-        allowed_fields = {"push_notification_enabled", "email_alert_enabled", "sms_alert_enabled", "instant_lead_alert", "weekly_performance_report",}
-        field = request.data.get("field")
-        value = request.data.get("value")
-        if field not in allowed_fields:
-            return Response(
-                {
-                    "success": False,
-                    "detail": "Invalid notification field.",
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer = NotificationToggleSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        field = serializer.validated_data["field"]
+        value = serializer.validated_data["value"]
 
         setting = self.get_object()
-        setattr(setting, field, bool(value))
+
         setattr(setting, field, value)
+
         setting.all_notification = all([
             setting.push_notification_enabled,
             setting.email_alert_enabled,
@@ -196,12 +192,14 @@ class UserNotificationSettingsViewSet(GenericViewSet):
         ])
 
         setting.save()
+
         return Response(
             {
                 "success": True,
                 "message": f"{field} updated successfully.",
                 "data": self.get_serializer(setting).data,
-            }
+            },
+            status=status.HTTP_200_OK,
         )
 
 

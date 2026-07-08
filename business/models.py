@@ -287,11 +287,11 @@ class UserNotificationSettings(BaseModel):
     instant_lead_alert = models.BooleanField(default=True)
     weekly_performance_report = models.BooleanField(default=True)
     
-    def clean(self):
-        if not self.user and not self.organization:
-            raise ValidationError("Either user or organization must be selected.")
-        if self.user and self.organization:
-            raise ValidationError("Only one of user or organization can be selected.")
+    # def clean(self):
+    #     if not self.user and not self.organization:
+    #         raise ValidationError("Either user or organization must be selected.")
+    #     if self.user and self.organization:
+    #         raise ValidationError("Only one of user or organization can be selected.")
     
     # def save(self, *args, **kwargs):
     #     # if self.all_notification:
