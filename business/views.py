@@ -2,20 +2,23 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from business.models import BusinessSetting
 from core.utils.views import BaseCreateAPIView, BaseGetAPIView, BasePatchAPIView
 from rest_framework.viewsets import GenericViewSet
 from .serializers import (
     OrganizationSetupSerializer, UpdateBusinessSettingSerializer, OrganizationSerializer, UserNotificationSettingsSerializer,
 
-    UserNotificationSettings,
+    UserNotificationSettings, NotificationToggleSerializer
 )
 from .choices import OnboardingStep
 from django.db import transaction
 from rest_framework.exceptions import ValidationError, NotFound
 from core.permissions import IsClientUser
 from rest_framework.decorators import action
-
+from twilio.rest import Client
+import os
+from core.permissions import IsClientUser
+from .models import ProviderAccount, BusinessSetting
+from .twilio.services import TwilioService
 
 class BusinessProfileSetupAPIView(BaseCreateAPIView):
     serializer_class = OrganizationSetupSerializer
@@ -127,9 +130,16 @@ class UserNotificationSettingsViewSet(GenericViewSet):
     permission_classes = [IsAuthenticated, IsClientUser]
 
     def get_object(self):
-        return UserNotificationSettings.objects.get(
-            user=self.request.user
-        )
+        organization = self.request.user.organization
+        if organization:
+            user_notification, _ = UserNotificationSettings.objects.get_or_create(
+                user=self.request.user, organization=organization
+            )
+        else:
+            user_notification, _ = UserNotificationSettings.objects.get_or_create(
+                user=self.request.user
+            )
+        return user_notification
 
     @action(detail=False, methods=["get"], url_path="current")
     def current(self, request):
@@ -144,22 +154,16 @@ class UserNotificationSettingsViewSet(GenericViewSet):
     @action(detail=False, methods=["patch"], url_path="all-notification")
     def update_all_notification(self, request):
         setting = self.get_object()
-        status = request.data.get("status")
-        if status is None:
-            return Response(
-                {
-                    "success": False,
-                    "detail": "status is required."
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        setting.all_notification = bool(status)
-        setting.push_notification_enabled = bool(status)
-        setting.email_alert_enabled = bool(status)
-        setting.sms_alert_enabled = bool(status)
-        setting.instant_lead_alert = bool(status)
-        setting.weekly_performance_report = bool(status)
+        serializer = self.get_serializer(setting, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        all_notification = serializer.validated_data.get("all_notification")
+        
+        setting.all_notification = all_notification
+        setting.push_notification_enabled = all_notification
+        setting.email_alert_enabled = all_notification
+        setting.sms_alert_enabled = all_notification
+        setting.instant_lead_alert = all_notification
+        setting.weekly_performance_report = all_notification
         setting.save()
 
         return Response(
@@ -172,21 +176,16 @@ class UserNotificationSettingsViewSet(GenericViewSet):
 
     @action(detail=False, methods=["patch"], url_path="toggle")
     def toggle(self, request):
-        allowed_fields = {"push_notification_enabled", "email_alert_enabled", "sms_alert_enabled", "instant_lead_alert", "weekly_performance_report",}
-        field = request.data.get("field")
-        value = request.data.get("value")
-        if field not in allowed_fields:
-            return Response(
-                {
-                    "success": False,
-                    "detail": "Invalid notification field.",
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer = NotificationToggleSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        field = serializer.validated_data["field"]
+        value = serializer.validated_data["value"]
 
         setting = self.get_object()
-        setattr(setting, field, bool(value))
+
         setattr(setting, field, value)
+
         setting.all_notification = all([
             setting.push_notification_enabled,
             setting.email_alert_enabled,
@@ -196,12 +195,53 @@ class UserNotificationSettingsViewSet(GenericViewSet):
         ])
 
         setting.save()
+
         return Response(
             {
                 "success": True,
                 "message": f"{field} updated successfully.",
                 "data": self.get_serializer(setting).data,
-            }
+            },
+            status=status.HTTP_200_OK,
         )
 
+class CreateSubAccountView(APIView):
+    permission_classes = [IsClientUser]
+    
+    @transaction.atomic
+    def get(self, request, *args, **kwargs):
+        business_profile = self.get_organization_profile()
+        twilio_service = TwilioService(business_profile)
+        twilio_number = twilio_service.search_numbers()
+        return Response({
+            "success": True,
+            "twilio_number": twilio_number
+        })
+    
+    def get_organization_profile(self):
+        user = self.request.user
+        if hasattr(user, "organization"):
+            return user.organization
+        else:
+            raise Exception("User have no organization.")
 
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        parchase_number = data.get("parchase_number", None)
+
+        business_profile = self.get_organization_profile()
+        twilio_service = TwilioService(business_profile)
+        provider_account = twilio_service.get_or_create_subaccount()
+        
+        if parchase_number:
+            return Response({
+                "success": True,
+                "message": f"{parchase_number} this number is successfully parchase."
+            })
+        else:
+            twilio_number = twilio_service.search_numbers()
+            return Response({
+                "success": True,
+                "twilio_number": twilio_number
+            })

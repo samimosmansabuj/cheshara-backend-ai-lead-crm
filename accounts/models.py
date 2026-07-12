@@ -14,7 +14,6 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     profile_picture = models.ImageField(upload_to="users/profile/", blank=True, null=True)
     user_type = models.CharField(max_length=20, choices=UserType.choices, default=UserType.CLIENT)
 
-    is_email_verified = models.BooleanField(default=False)
     is_phone_verified = models.BooleanField(default=False)
     failed_login_attempts = models.PositiveSmallIntegerField(default=0)
     last_password_changed_at = models.DateTimeField(blank=True, null=True)
