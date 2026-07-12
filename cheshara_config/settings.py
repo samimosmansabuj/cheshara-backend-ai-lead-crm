@@ -202,3 +202,7 @@ EMAIL_HOST_USER = 'your_email@example.com'
 EMAIL_HOST_PASSWORD = 'your_password'
 EMAIL_USE_SSL = False
 DEFAULT_FROM_EMAIL = 'your_email@example.com'
+
+
+TWILIO_SMS_WEBHOOK_URL = "https://api.remyza.com/api/v1/twilio/webhook/"
+TWILIO_VOICE_WEBHOOK_URL = "https://api.remyza.com/api/v1/twilio/voice/"

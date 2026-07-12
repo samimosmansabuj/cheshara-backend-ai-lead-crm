@@ -237,7 +237,7 @@ class PhoneNumber(BaseModel):
     region = models.CharField(max_length=100, blank=True, default="")
     capabilities = models.JSONField(default=dict, blank=True)
     configuration = models.JSONField(default=dict, blank=True)
-    is_primary = models.BooleanField(default=True)
+    is_primary = models.BooleanField(default=False)
     status = models.CharField(max_length=20, choices=PhoneNumberStatus.choices, default=PhoneNumberStatus.PENDING, db_index=True)
     purchased_at = models.DateTimeField(null=True, blank=True)
     released_at = models.DateTimeField(null=True, blank=True)
@@ -293,4 +293,47 @@ class UserNotificationSettings(BaseModel):
 
 
 
+
+
+
+# class TwilioUsage(models.Model):
+#     organization = models.ForeignKey(Organization, ...)
+#     phone_numbers = models.PositiveIntegerField(default=0)
+#     sms_sent = models.PositiveIntegerField(default=0)
+#     sms_received = models.PositiveIntegerField(default=0)
+#     estimated_cost = models.DecimalField(...)
+#     billing_month = models.DateField(...)
+
+# class UsageLog(models.Model):
+#     organization = models.ForeignKey(...)
+#     event_type = models.CharField(...)
+#     resource_sid = models.CharField(...)
+#     quantity = models.IntegerField(...)
+#     unit_cost = models.DecimalField(...)
+#     total_cost = models.DecimalField(...)
+#     created_at = models.DateTimeField(...)
+
+
+
+class FreeTrailDetails(BaseModel):
+    organization = models.ForeignKey("business.Organization", on_delete=models.CASCADE, related_name="trail_phone_numbers", blank=True, null=True)
+    provider = models.ForeignKey("business.ProviderAccount", on_delete=models.SET_NULL, related_name="trail_phone_numbers", blank=True, null=True)
+    free_trail = models.ForeignKey("business.FreeTrailPhoneNumber", on_delete=models.SET_NULL, blank=True, null=True)
+    trail_number = models.CharField(max_length=20, blank=True, null=True)
+    start_at = models.DateTimeField(auto_now=True)
+    end_at = models.DateTimeField(blank=True, null=True)
+    is_expired = models.BooleanField(default=False)
+
+class FreeTrailPhoneNumber(BaseModel):
+    owner_account_sid = models.CharField(max_length=64, blank=True, null=True)
+    account_sid = models.CharField(max_length=64, unique=True, db_index=True)
+    account_auth_token = models.CharField(max_length=255, blank=True, null=True)
+    webhook_url = models.URLField(blank=True, default="")
+    webhook_secret = models.CharField(max_length=255, blank=True, default="")
+    last_synced_at = models.DateTimeField(null=True, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    phone_number = models.CharField(max_length=30, unique=True, db_index=True)
+    provider_phone_sid = models.CharField(max_length=100, unique=True, db_index=True)
+    messaging_service_sid = models.CharField(max_length=100, blank=True, default="")
+    status = models.CharField(max_length=20, choices=PhoneNumberStatus.choices, default=PhoneNumberStatus.PENDING, db_index=True)
 

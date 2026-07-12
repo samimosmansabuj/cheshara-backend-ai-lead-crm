@@ -235,13 +235,24 @@ class CreateSubAccountView(APIView):
         provider_account = twilio_service.get_or_create_subaccount()
         
         if parchase_number:
-            return Response({
-                "success": True,
-                "message": f"{parchase_number} this number is successfully parchase."
-            })
+            purchase_data = twilio_service.purchase_number(parchase_number)
+            print("purchase_data: ", purchase_data)
+            return Response(
+                {
+                    "success": True,
+                    "message": f"{parchase_number} this number is successfully parchase."
+                }, status=status.HTTP_201_CREATED
+            )
         else:
-            twilio_number = twilio_service.search_numbers()
-            return Response({
-                "success": True,
-                "twilio_number": twilio_number
-            })
+            twilio_number = twilio_service.list_numbers()
+            return Response(
+                {
+                    "success": True,
+                    "message": "Parchase Number must be selected!",
+                    "purchase_number": twilio_number
+                }, status=status.HTTP_200_OK
+            )
+
+
+# class View
+

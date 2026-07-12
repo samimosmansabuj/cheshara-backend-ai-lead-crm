@@ -3,11 +3,14 @@ from django.conf import settings
 from django.db import transaction
 from twilio.rest import Client
 from twilio.base.exceptions import TwilioRestException
-from business.models import ProviderAccount
-logger = logging.getLogger(__name__)
-import os
+from business.models import ProviderAccount, PhoneNumber
 from django.utils import timezone
 from typing import Any, Dict
+from business.choices import PhoneNumberStatus
+from django.conf import settings
+logger = logging.getLogger(__name__)
+import os
+
 
 class TwilioService:
     def __init__(self, organization):
@@ -53,6 +56,7 @@ class TwilioService:
         }
         return serialize_subaccount
 
+
     def twilio_sub_account_create(self, friendly_name) -> dict:
         # live data--------
         # client = self.client
@@ -83,8 +87,11 @@ class TwilioService:
         try:
             if hasattr(self.organization, "provider_account"):
                 provider_account = self.organization.provider_account
-                sub_account_status = self.client.api.accounts(provider_account.account_sid).fetch()
+                subaccount_client = self.subaccount_client()
+                sub_account_status = subaccount_client.api.accounts(provider_account.account_sid).fetch()
                 if sub_account_status.status == "active":
+                    provider_account.last_synced_at = timezone.now()
+                    provider_account.save()
                     return provider_account
                 else:
                     sub_account = self.twilio_sub_account_create(self.organization.name)
@@ -93,6 +100,7 @@ class TwilioService:
                     provider_account.friendly_name = sub_account["status"]
                     provider_account.status = sub_account["status"]
                     provider_account.auth_token = sub_account["auth_token"]
+                    provider_account.last_synced_at = timezone.now()
                     provider_account.save()
                     return provider_account
             else:
@@ -106,6 +114,7 @@ class TwilioService:
             logger.exception(e)
             raise
     
+
     def validate_master_credentials(self) -> bool:
         try:
             account = self.client.api.accounts(
@@ -142,7 +151,7 @@ class TwilioService:
             raise exc
     
 
-    def serialize_phone_number(self, number):
+    def serialize_search_phone_number(self, number):
         return {
             "friendly_name": number.friendly_name,
             "phone_number": number.phone_number,
@@ -153,6 +162,7 @@ class TwilioService:
             "locality": getattr(number, "locality", None),
             "iso_country": getattr(number, "iso_country", None),
             "capabilities": number.capabilities,
+            "address_requirements": number.address_requirements,
         }
 
     def search_numbers(self, country="US", phone_type="local", area_code=None, sms_enabled=True, limit=20,):
@@ -167,7 +177,7 @@ class TwilioService:
             
             numbers = resource.list(limit=2, sms_enabled=True)
             return [
-                self.serialize_phone_number(number)
+                self.serialize_search_phone_number(number)
                 for number in numbers
             ]
         except TwilioRestException:
@@ -247,9 +257,42 @@ class TwilioService:
         # )
         return
 
+    
+    @transaction.atomic
+    def save_phone_number(self, data):
+        # PhoneNumber.objects.filter(
+        #     organization=self.organization,
+        #     is_primary=True,
+        # ).update(is_primary=False)
+        phone_number, created = PhoneNumber.objects.update_or_create(
+            provider_phone_sid=data["sid"],
+            defaults={
+                "organization": self.organization,
+                "provider": self.organization.provider_account,
+                "phone_number": data["phone_number"],
+                "country": data["country_code"],
+                "capabilities": data["capabilities"],
+                "configuration": {
+                    "friendly_name": data["friendly_name"],
+                    "voice_url": data["voice_url"],
+                    "sms_url": data["sms_url"],
+                    "uri": data["uri"],
+                    "account_sid": data["account_sid"],
+                },
+                "status": PhoneNumberStatus.ACTIVE,
+                "purchased_at": timezone.now(),
+                "last_synced_at": timezone.now(),
+            },
+        )
 
+        logger.info(
+            "Phone number synced successfully (%s)",
+            phone_number.phone_number,
+        )
 
-    def serialize_phone_number(self, phone) -> Dict[str, Any]:
+        return phone_number
+
+    def serialize_purchase_phone_number(self, phone) -> Dict[str, Any]:
         return {
             "sid": getattr(phone, "sid", None),
             "account_sid": getattr(phone, "account_sid", None),
@@ -266,64 +309,80 @@ class TwilioService:
             "uri": getattr(phone, "uri", None),
         }
 
-    def purchase_number(self, phone_number: str, sms_url: str | None = None, status_callback: str | None = None, voice_url: str | None = None,):
-        """
-        Purchase a Twilio Phone Number.
-
-        Parameters
-        ----------
-        phone_number : str
-            Example: +12065550111
-
-        sms_url : str | None
-            Incoming SMS Webhook
-
-        status_callback : str | None
-            SMS Status Callback URL
-
-        voice_url : str | None
-            Incoming Voice Webhook
-
-        Returns
-        -------
-        IncomingPhoneNumberInstance
-        """
-        
+    @transaction.atomic
+    def purchase_number(self, phone_number: str, sms_url: str | None = None, status_callback: str | None = None, voice_url: str | None = None,):        
         client = self.subaccount_client()
-
-        payload = {
-            "phone_number": phone_number,
-        }
+        payload = {"phone_number": phone_number,}
 
         if sms_url:
             payload["sms_url"] = sms_url
-
         if status_callback:
             payload["status_callback"] = status_callback
-
         if voice_url:
             payload["voice_url"] = voice_url
 
         try:
+            purchased = client.incoming_phone_numbers.create(**payload)
+            print("purchased: ", purchased)
+            logger.info("Phone number purchased successfully (%s)", purchased.phone_number,)
 
-            purchased = client.incoming_phone_numbers.create(
-                **payload
+            serialize_phone_number = self.serialize_phone_number(purchased)
+            print("serialize_phone_number: ", serialize_phone_number)
+
+            save_phone_number = self.save_phone_number(serialize_phone_number)
+            print("save_phone_number: ", save_phone_number)
+            return serialize_phone_number
+        except TwilioRestException:
+            logger.exception("Unable to purchase phone number.")
+            raise Exception("Unable to purchase phone number.")
+
+
+    def list_numbers(self):
+        client = self.subaccount_client()
+        numbers = client.incoming_phone_numbers.list()
+        return [
+            self.serialize_search_phone_number(number)
+            for number in numbers
+        ]
+
+    def release_number(self, phone_sid: str):
+        client = self.subaccount_client()
+        try:
+            client.incoming_phone_numbers(phone_sid).delete()
+            PhoneNumber.objects.filter(
+                sid=phone_sid,
+                organization=self.organization,
+            ).update(
+                is_active=False,
             )
 
-            logger.info(
-                "Phone number purchased successfully (%s)",
-                purchased.phone_number,
-            )
-
-            return purchased
+            return True
 
         except TwilioRestException:
-
-            logger.exception(
-                "Unable to purchase phone number."
-            )
-
+            logger.exception("Failed to release phone number.")
             raise
+    
+    def update_webhook(
+        self,
+        phone_sid: str,
+        sms_url: str = None,
+        voice_url: str = None,
+    ):
+        client = self.subaccount_client()
 
+        payload = {}
 
+        if sms_url:
+            payload["sms_url"] = sms_url
+            payload["sms_method"] = "POST"
+
+        if voice_url:
+            payload["voice_url"] = voice_url
+            payload["voice_method"] = "POST"
+
+        number = client.incoming_phone_numbers(phone_sid).update(
+            **payload
+        )
+
+        return self.serialize_phone_number(number)
 
