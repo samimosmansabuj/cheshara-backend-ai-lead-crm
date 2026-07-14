@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import (
-    Organization, BusinessSetting, UserNotificationSettings
+    Organization, BusinessSetting, UserNotificationSettings,
 )
 from django.db import transaction
 
@@ -81,4 +81,7 @@ class NotificationToggleSerializer(serializers.Serializer):
 
     field = serializers.ChoiceField(choices=NOTIFICATION_FIELDS)
     value = serializers.BooleanField()
+
+
+
 

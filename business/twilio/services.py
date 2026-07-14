@@ -1,4 +1,3 @@
-import logging
 from django.conf import settings
 from django.db import transaction
 from twilio.rest import Client
@@ -8,12 +7,13 @@ from django.utils import timezone
 from typing import Any, Dict
 from business.choices import PhoneNumberStatus
 from django.conf import settings
+import logging
 logger = logging.getLogger(__name__)
 import os
 
 
 class TwilioService:
-    def __init__(self, organization):
+    def __init__(self, organization=None):
         self.organization = organization
         self.client = self.master_client()
 
@@ -167,6 +167,7 @@ class TwilioService:
 
     def search_numbers(self, country="US", phone_type="local", area_code=None, sms_enabled=True, limit=20,):
         client = self.subaccount_client()
+        # client = self.master_client()
         try:
             if phone_type == "local":
                 resource = client.available_phone_numbers(country).local
@@ -183,6 +184,7 @@ class TwilioService:
         except TwilioRestException:
             logger.exception("Unable to search phone numbers.")
             raise
+
     
     def advanced_search_numbers( self, country: str = "US", phone_type: str = "local", area_code: str | None = None, contains: str | None = None, in_region: str | None = None, in_locality: str | None = None, near_number: str | None = None, near_lat_long: tuple | None = None, distance: int | None = None, sms_enabled: bool = True, voice_enabled: bool = False, mms_enabled: bool = False, fax_enabled: bool = False, exclude_all_address_required: bool = False, limit: int = 20,):
         client = self.subaccount_client()
@@ -260,10 +262,6 @@ class TwilioService:
     
     @transaction.atomic
     def save_phone_number(self, data):
-        # PhoneNumber.objects.filter(
-        #     organization=self.organization,
-        #     is_primary=True,
-        # ).update(is_primary=False)
         phone_number, created = PhoneNumber.objects.update_or_create(
             provider_phone_sid=data["sid"],
             defaults={
@@ -326,7 +324,7 @@ class TwilioService:
             print("purchased: ", purchased)
             logger.info("Phone number purchased successfully (%s)", purchased.phone_number,)
 
-            serialize_phone_number = self.serialize_phone_number(purchased)
+            serialize_phone_number = self.serialize_purchase_phone_number(purchased)
             print("serialize_phone_number: ", serialize_phone_number)
 
             save_phone_number = self.save_phone_number(serialize_phone_number)

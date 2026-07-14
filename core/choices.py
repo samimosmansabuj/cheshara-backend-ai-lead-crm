@@ -70,3 +70,7 @@ class SettingValueType(models.TextChoices):
     JSON = "json", "JSON"
 
 
+class FreeTrailNumberType(models.TextChoices):
+    LOCAL = "LOCAL"
+    TOLL_FREE = "TOLL_FREE"
+

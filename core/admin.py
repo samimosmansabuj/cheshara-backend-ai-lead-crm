@@ -1,7 +1,8 @@
 from django.contrib import admin
 
 from .models import (
-    BusinessType, Notification, AuditLog, SystemSetting, APIKey, Industry
+    BusinessType, Notification, AuditLog, SystemSetting, APIKey, Industry,
+    TwilioConfiguration, FreeTrailPhoneNumber, FreeTrailDetails
 )
 
 
@@ -66,3 +67,6 @@ class APIKeyAdmin(admin.ModelAdmin):
 
 admin.site.register(BusinessType)
 admin.site.register(Industry)
+admin.site.register(TwilioConfiguration)
+admin.site.register(FreeTrailPhoneNumber)
+admin.site.register(FreeTrailDetails)

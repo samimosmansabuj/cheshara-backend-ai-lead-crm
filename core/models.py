@@ -1,6 +1,8 @@
 from django.db import models
-from .choices import SettingValueType, NotificationType, NotificationPriority
+from .choices import SettingValueType, NotificationType, NotificationPriority, FreeTrailNumberType
 from common.models import BaseModel
+from django.utils import timezone
+from business.choices import PhoneNumberStatus
 
 class Notification(BaseModel):
     user = models.ForeignKey("accounts.User", on_delete=models.CASCADE, related_name="notifications")
@@ -75,6 +77,77 @@ class Industry(BaseModel):
 
     def __str__(self):
         return self.name
+
+
+
+class TwilioConfiguration(BaseModel):
+    # Master Account
+    master_account_sid = models.CharField(max_length=64, blank=True, null=True)
+    master_account_auth_token = models.CharField(max_length=255, blank=True, null=True)
+
+    # Trial Account / Shared Pool
+    trial_account_name = models.CharField(max_length=255, blank=True, default="Trial Pool")
+    trial_account_sid = models.CharField(max_length=64, blank=True, default="")
+    trial_account_auth_token = models.CharField(max_length=255, blank=True, default="")
+
+    
+
+    # Default Configuration
+    default_country = models.CharField(max_length=2, default="US")
+    webhook_url = models.URLField(blank=True, default="")
+    status_callback_url = models.URLField(blank=True, default="")
+    voice_webhook_url = models.URLField(blank=True, default="")
+    webhook_secret = models.CharField(max_length=255, blank=True, default="")
+
+    # Trial Settings
+    trial_duration_days = models.PositiveIntegerField(default=7)
+    trial_sms_limit = models.PositiveIntegerField(default=50)
+    trial_phone_limit = models.PositiveIntegerField(default=1)
+
+    # Feature Flags
+    enable_trial = models.BooleanField(default=True)
+    auto_assign_webhook = models.BooleanField(default=True)
+    auto_create_subaccount = models.BooleanField(default=True)
+    auto_purchase_number = models.BooleanField(default=False)
+
+    # Sync
+    last_synced_at = models.DateTimeField(default=timezone.now)
+    is_active = models.BooleanField(default=True)
+    notes = models.TextField(blank=True, default="")
+    
+
+    def __str__(self):
+        return "Twilio Configuration"
+
+class FreeTrailPhoneNumber(BaseModel):
+    owner_account_sid = models.CharField(max_length=64, blank=True, null=True)
+    account_sid = models.CharField(max_length=64, unique=True, db_index=True)
+    account_auth_token = models.CharField(max_length=255, blank=True, null=True)
+    
+    number_type = models.CharField(max_length=20, choices=FreeTrailNumberType.choices, default=FreeTrailNumberType.TOLL_FREE)
+    phone_number = models.CharField(max_length=30, unique=True, db_index=True)
+    provider_phone_sid = models.CharField(max_length=100, unique=True, db_index=True)
+    capabilities = models.JSONField(default=dict, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+
+    webhook_url = models.URLField(blank=True, default="")
+    webhook_secret = models.CharField(max_length=255, blank=True, default="")
+
+    is_used = models.BooleanField(default=False)
+    status = models.CharField(max_length=20, choices=PhoneNumberStatus.choices, default=PhoneNumberStatus.PENDING, db_index=True)
+    purchased_at = models.DateTimeField(null=True, blank=True)
+    released_at = models.DateTimeField(null=True, blank=True)
+    last_synced_at = models.DateTimeField(default=timezone.now)
+
+class FreeTrailDetails(BaseModel):
+    organization = models.ForeignKey("business.Organization", on_delete=models.CASCADE, related_name="trail_phone_numbers", blank=True, null=True)
+    provider = models.ForeignKey("business.ProviderAccount", on_delete=models.SET_NULL, related_name="trail_phone_numbers", blank=True, null=True)
+    free_trail = models.ForeignKey(FreeTrailPhoneNumber, on_delete=models.SET_NULL, blank=True, null=True)
+    trail_number = models.CharField(max_length=20, blank=True, null=True)
+    start_at = models.DateTimeField(default=timezone.now)
+    end_at = models.DateTimeField(blank=True, null=True)
+    is_expired = models.BooleanField(default=False)
+
 
 
 
