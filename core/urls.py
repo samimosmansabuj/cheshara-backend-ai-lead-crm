@@ -4,6 +4,7 @@ from .views import (
     BusinessTypeViewSet,
     IndustryViewSet,
     FreeTrailPhoneNumberViewSet,
+    TwilioWebhookHandler
 )
 
 router = DefaultRouter()
@@ -13,5 +14,7 @@ router.register("free-trail-number", FreeTrailPhoneNumberViewSet, basename="free
 
 urlpatterns = [
     path("", include(router.urls)),
+    
+    path("twilio/webhook/", TwilioWebhookHandler.as_view(), name="twilio-webhook",),
 ]
 

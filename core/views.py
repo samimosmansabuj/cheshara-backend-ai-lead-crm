@@ -27,6 +27,7 @@ from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
+from rest_framework.views import APIView
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
@@ -45,6 +46,7 @@ import logging
 logger = logging.getLogger(__name__)
 from business.choices import PhoneNumberStatus
 from twilio.base.exceptions import TwilioRestException
+import json
 
 class FreeTrailPhoneNumberViewSet(OwnReadOnlyModelViewSet):
     serializer_class = FreeTrailPhoneNumberSerializer
@@ -211,46 +213,53 @@ class FreeTrailPhoneNumberViewSet(OwnReadOnlyModelViewSet):
         print("data: ", data)
         phone_number = data.get("phone_number", None)
 
-
         if phone_number is not None:
-            payload = {"phone_number": phone_number,}
+            try:
+                payload = {"phone_number": phone_number,}
 
-            FREE_TRAIL_ACCOUNT_SID = os.getenv("FREE_TRAIL_ACCOUNT_SID")
-            FREE_TRAIL_AUTH_TOKEN = os.getenv("FREE_TRAIL_AUTH_TOKEN")
-            client = Client(FREE_TRAIL_ACCOUNT_SID, FREE_TRAIL_AUTH_TOKEN)
-            purchased = client.incoming_phone_numbers.create(**payload)
-            print("purchased: ", purchased)
-            logger.info("Phone number purchased successfully (%s)", purchased.phone_number,)
-            
-            serialize_phone_number = self.to_dict(purchased)
-            print("serialize_phone_number: ", serialize_phone_number)
-            
-            OWNER_ACCOUNT_SID = os.getenv("ACCOUNT_SID")
-            obj, created = FreeTrailPhoneNumber.objects.update_or_create(
-                provider_phone_sid=serialize_phone_number["sid"],
-                phone_number=serialize_phone_number["phone_number"],
-                defaults={
-                    "owner_account_sid": OWNER_ACCOUNT_SID,
-                    "account_sid": FREE_TRAIL_ACCOUNT_SID,
-                    "account_auth_token": FREE_TRAIL_AUTH_TOKEN,
-                    "capabilities": serialize_phone_number["capabilities"],
-                    "metadata": serialize_phone_number,
-                    "status": PhoneNumberStatus.ACTIVE,
+                client =self.get_trial_client()
+                purchased = client.incoming_phone_numbers.create(**payload)
+                print("purchased: ", purchased)
+                logger.info("Phone number purchased successfully (%s)", purchased.phone_number,)
+                
+                serialize_phone_number = self.to_dict(purchased)
+                print("serialize_phone_number: ", serialize_phone_number)
+                
+                obj, created = FreeTrailPhoneNumber.objects.update_or_create(
+                    provider_phone_sid=serialize_phone_number["sid"],
+                    phone_number=serialize_phone_number["phone_number"],
+                    defaults={
+                        "owner_account_sid": self.MASTER_ACCOUNT_SID,
+                        "account_sid": self.FREE_TRAIL_ACCOUNT_SID,
+                        "account_auth_token": self.FREE_TRAIL_AUTH_TOKEN,
+                        "capabilities": serialize_phone_number["capabilities"],
+                        "metadata": serialize_phone_number,
+                        "status": PhoneNumberStatus.ACTIVE,
 
-                    "purchased_at": serialize_phone_number["date_created"],
-                    "last_synced_at": serialize_phone_number["date_updated"],
-                    "is_used": False,
-                    "webhook_url": serialize_phone_number["sms_url"] or "",
-                },
-            )
-            
-            return Response(
-                {
-                    "success": True,
-                    "message": "Trial number purchased successfully.",
-                    "data": self.get_serializer(obj).data
-                }, status=status.HTTP_201_CREATED
-            )
+                        "purchased_at": serialize_phone_number["date_created"],
+                        "last_synced_at": serialize_phone_number["date_updated"],
+                        "is_used": False,
+                        "webhook_url": serialize_phone_number["sms_url"] or "",
+                    },
+                )
+                
+                return Response(
+                    {
+                        "success": True,
+                        "message": "Trial number purchased successfully.",
+                        "data": self.get_serializer(obj).data
+                    }, status=status.HTTP_201_CREATED
+                )
+            except TwilioRestException as e:
+                print("e: ", e)
+                return Response(
+                    {
+                        "success": False,
+                        "detail": str(e),
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
         else:
             return Response(
                 {
@@ -330,6 +339,56 @@ class FreeTrailPhoneNumberViewSet(OwnReadOnlyModelViewSet):
         )
 
 
+    @action(detail=True, methods=["get"], url_path="tfv-fetch")
+    def TFVRequestForIncommingNumber(self, request, pk):
+        object = self.get_object()
+        client = self.get_client(object)
+        tollfree_verifications = client.messaging.v1.tollfree_verifications.list(
+            tollfree_phone_number_sid=object.provider_phone_sid, limit=20
+        )
+        print("tollfree_verifications: ", tollfree_verifications)
+        for record in tollfree_verifications:
+            print(record.sid)
+        return Response(
+            {
+                "succcess": True,
+                "data": tollfree_verifications
+            }
+        )
+    
+    @TFVRequestForIncommingNumber.mapping.post
+    def TFVRequestCreate(self, request, pk):
+        object = self.get_object()
+        client = self.get_client(object)
+        tollfree_verification = client.messaging.v1.tollfree_verifications.create(
+            customer_profile_sid="BUaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            business_name="Owl, Inc.",
+            business_website="http://www.example.com",
+            notification_email="support@example.com",
+            use_case_categories=["TWO_FACTOR_AUTHENTICATION", "MARKETING"],
+            use_case_summary="This number is used to send out promotional offers and coupons to the customers of Owl, Inc.",
+            production_message_sample="lorem ipsum",
+            opt_in_image_urls=[
+                "https://example.com/images/image1.jpg",
+                "https://example.com/images/image2.jpg",
+            ],
+            opt_in_type="VERBAL",
+            message_volume="10",
+            additional_information="privacy policy is geo-locked to NAMER region",
+            tollfree_phone_number_sid="PNaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            vetting_id="cv|1.0|mno|tfree|b344a16f-b435-4a39-bf91-df9b8e4e0a0d|E5eh-rOPHCr_lrgHDYEZP45FzuJSHS1fkFTmVPD8GQ4",
+            vetting_provider="CAMPAIGN_VERIFY",
+        )
+
+        print(tollfree_verification.sid)
+        return Response(
+            {
+                "succcess": True,
+                "data": "tollfree_verifications"
+            }
+        )
+
+
     # Update Twilio Number---
     @action(detail=True, methods=["post"], url_path="update-twilio-phone")
     def update_twilio_phone(self, request, pk):
@@ -358,9 +417,9 @@ class FreeTrailPhoneNumberViewSet(OwnReadOnlyModelViewSet):
 
         serializer = SendSMSSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
+        
         # client = self.get_trial_client()
-        client = self.get_master_client()
+        client = self.get_client(phone_number)
 
         try:
             message = client.messages.create(
@@ -423,6 +482,7 @@ class FreeTrailPhoneNumberViewSet(OwnReadOnlyModelViewSet):
 
     def get_client(self, object: FreeTrailPhoneNumber):
         return Client(object.account_sid, object.account_auth_token)
+        # return Client(object.account_sid, object.account_auth_token)
     
     def get_trial_client(self):
         return Client(self.FREE_TRAIL_ACCOUNT_SID, self.FREE_TRAIL_AUTH_TOKEN)
@@ -431,3 +491,92 @@ class FreeTrailPhoneNumberViewSet(OwnReadOnlyModelViewSet):
         return Client(self.MASTER_ACCOUNT_SID, self.MASTER_AUTH_TOKEN)
 
 
+class TwilioWebhookHandler(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def post(self, request, *args, **kwargs):
+        print("\n" + "=" * 100)
+        print("🔥 TWILIO WEBHOOK RECEIVED")
+        print("=" * 100)
+
+        # ==========================================================================
+        # Request Information
+        # ==========================================================================
+        print("\n📌 REQUEST")
+        print(f"Method : {request.method}")
+        print(f"Path   : {request.path}")
+        print(f"URL    : {request.build_absolute_uri()}")
+
+        # ==========================================================================
+        # Headers
+        # ==========================================================================
+        print("\n📌 HEADERS")
+        for key, value in request.headers.items():
+            print(f"{key}: {value}")
+
+        # ==========================================================================
+        # Parsed Data (Recommended)
+        # ==========================================================================
+        print("\n📌 PARSED DATA")
+        for key, value in request.data.items():
+            print(f"{key}: {value}")
+
+        # ==========================================================================
+        # POST Data
+        # ==========================================================================
+        print("\n📌 POST DATA")
+        for key, value in request.POST.items():
+            print(f"{key}: {value}")
+
+        # ==========================================================================
+        # Query Params
+        # ==========================================================================
+        print("\n📌 QUERY PARAMS")
+        for key, value in request.query_params.items():
+            print(f"{key}: {value}")
+
+        # ==========================================================================
+        # Raw Body
+        # ==========================================================================
+        print("\n📌 RAW BODY")
+        print(request.body.decode("utf-8", errors="ignore"))
+
+        # ==========================================================================
+        # Uploaded Files (MMS)
+        # ==========================================================================
+        if request.FILES:
+            print("\n📌 FILES")
+            for key, file in request.FILES.items():
+                print(f"{key}: {file.name}")
+
+        print("=" * 100)
+
+        logger.info(
+            json.dumps(
+                {
+                    "headers": dict(request.headers),
+                    "data": dict(request.data),
+                    "post": dict(request.POST),
+                    "query_params": dict(request.query_params),
+                },
+                indent=4,
+                default=str,
+            )
+        )
+
+        return Response(
+            {
+                "success": True,
+                "message": "Webhook received successfully.",
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def get(self, request, *args, **kwargs):
+        return Response(
+            {
+                "success": True,
+                "message": "Webhook URL Currect"
+            }, status=status.HTTP_200_OK
+        )

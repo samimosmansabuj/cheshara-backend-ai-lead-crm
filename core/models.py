@@ -149,6 +149,14 @@ class FreeTrailDetails(BaseModel):
     is_expired = models.BooleanField(default=False)
 
 
+class TwilioWebhookLog(models.Model):
+    headers = models.JSONField(default=dict)
+    payload = models.JSONField(default=dict)
+    body = models.TextField(blank=True)
+
+    ip_address = models.GenericIPAddressField(null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 
