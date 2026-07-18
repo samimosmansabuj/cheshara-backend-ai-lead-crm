@@ -40,6 +40,7 @@ from .models import (
 
 from core.utils.viewsets import OwnReadOnlyModelViewSet
 from .serializers import FreeTrailPhoneNumberSerializer, SearchTrialNumberSerializer, SendSMSSerializer
+from .models import TwilioWebhookLog
 from twilio.rest import Client
 import os
 import logging
@@ -47,6 +48,7 @@ logger = logging.getLogger(__name__)
 from business.choices import PhoneNumberStatus
 from twilio.base.exceptions import TwilioRestException
 import json
+from django.shortcuts import render
 
 class FreeTrailPhoneNumberViewSet(OwnReadOnlyModelViewSet):
     serializer_class = FreeTrailPhoneNumberSerializer
@@ -338,6 +340,65 @@ class FreeTrailPhoneNumberViewSet(OwnReadOnlyModelViewSet):
             }, status=status.HTTP_200_OK
         )
 
+    
+    def serializer_tfv(self, record):
+        return {
+            "sid": record.sid,
+            "account_sid": record.account_sid,
+            "customer_profile_sid": record.customer_profile_sid,
+            "regulated_item_sid": record.regulated_item_sid,
+            "trust_product_sid": record.trust_product_sid,
+            "business_name": record.business_name,
+            "status": record.status,
+            "date_created": record.date_created,
+            "date_updated": record.date_updated,
+            "business_street_address": record.business_street_address,
+            "business_street_address2": record.business_street_address2,
+            "business_city": record.business_city,
+            "business_state_province_region": record.business_state_province_region,
+            "business_postal_code": record.business_postal_code,
+            "business_country": record.business_country,
+            "business_website": record.business_website,
+            "business_contact_first_name": record.business_contact_first_name,
+            "business_contact_last_name": record.business_contact_last_name,
+            "business_contact_email": record.business_contact_email,
+            "business_contact_phone": record.business_contact_phone,
+            "notification_email": record.notification_email,
+            "use_case_categories": record.use_case_categories,
+            "use_case_summary": record.use_case_summary,
+            "production_message_sample": record.production_message_sample,
+            "opt_in_image_urls": record.opt_in_image_urls,
+            "opt_in_type": record.opt_in_type,
+            "message_volume": record.message_volume,
+            "additional_information": record.additional_information,
+            "tollfree_phone_number_sid": record.tollfree_phone_number_sid,
+            "rejection_reason": record.rejection_reason,
+            "error_code": record.error_code,
+            "edit_expiration": record.edit_expiration,
+            "edit_allowed": record.edit_allowed,
+            "rejection_reasons": record.rejection_reasons,
+            "resource_links": record.resource_links,
+            "url": record.url,
+            "external_reference_id": record.external_reference_id,
+
+            # // New response fields for the 2026 update
+            "business_registration_number": record.business_registration_number,
+            "business_registration_authority": record.business_registration_authority,
+            "business_registration_country": record.business_registration_country,
+            "doing_business_as": record.doing_business_as,
+            "business_type": record.business_type,
+            # "opt_in_confirmation_sample": record.opt_in_confirmation_sample,
+            "help_message_sample": record.help_message_sample,
+            "privacy_policy_url": record.privacy_policy_url,
+            # "terms_and_condition_url": record.terms_and_condition_url,
+            "age_gated_content": record.age_gated_content,
+            "opt_in_keywords": record.opt_in_keywords,
+            
+            # // New response fields for CV Token update
+            "vetting_id": record.vetting_id,       
+            "vetting_provider": record.vetting_provider,
+            "vetting_id_expiration": record.vetting_id_expiration
+        }
 
     @action(detail=True, methods=["get"], url_path="tfv-fetch")
     def TFVRequestForIncommingNumber(self, request, pk):
@@ -346,13 +407,16 @@ class FreeTrailPhoneNumberViewSet(OwnReadOnlyModelViewSet):
         tollfree_verifications = client.messaging.v1.tollfree_verifications.list(
             tollfree_phone_number_sid=object.provider_phone_sid, limit=20
         )
-        print("tollfree_verifications: ", tollfree_verifications)
+        
+        data = []
         for record in tollfree_verifications:
-            print(record.sid)
+            data.append(self.serializer_tfv(record))
+        
+
         return Response(
             {
                 "succcess": True,
-                "data": tollfree_verifications
+                "data": data
             }
         )
     
@@ -388,6 +452,19 @@ class FreeTrailPhoneNumberViewSet(OwnReadOnlyModelViewSet):
             }
         )
 
+    
+    @action(detail=True, methods=["get"], url_path="sms-consent")
+    def sms_consent(self, request, *args, **kwargs):
+        context = {
+            "organization_logo": None,
+            "organization_name": "Chesera LLC",
+            "organization_email": "cosmascheseret@gmail.com",
+            "organization_website": "https://trychesera.com/",
+            "organization_privacy_policy": "https://trychesera.com/",
+            "organization_terms_of_service": "https://trychesera.com/",
+
+        }
+        return render(request, "sms_consent.html", context)
 
     # Update Twilio Number---
     @action(detail=True, methods=["post"], url_path="update-twilio-phone")
@@ -495,76 +572,43 @@ class TwilioWebhookHandler(APIView):
     authentication_classes = []
     permission_classes = []
 
-    def post(self, request, *args, **kwargs):
-        print("\n" + "=" * 100)
-        print("🔥 TWILIO WEBHOOK RECEIVED")
-        print("=" * 100)
+    @staticmethod
+    def get_client_ip(request):
+        x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+        if x_forwarded_for:
+            return x_forwarded_for.split(",")[0].strip()
+        return request.META.get("REMOTE_ADDR")
 
-        # ==========================================================================
-        # Request Information
-        # ==========================================================================
-        print("\n📌 REQUEST")
-        print(f"Method : {request.method}")
-        print(f"Path   : {request.path}")
-        print(f"URL    : {request.build_absolute_uri()}")
+    def _log_request(self, request):
+        raw_body = request.body.decode("utf-8", errors="ignore")
+        print("raw: " , raw_body)
 
-        # ==========================================================================
-        # Headers
-        # ==========================================================================
-        print("\n📌 HEADERS")
-        for key, value in request.headers.items():
-            print(f"{key}: {value}")
+        # try:
+        #     payload = request.data.dict()
+        # except AttributeError:
+        #     payload = dict(request.data)
 
-        # ==========================================================================
-        # Parsed Data (Recommended)
-        # ==========================================================================
-        print("\n📌 PARSED DATA")
-        for key, value in request.data.items():
-            print(f"{key}: {value}")
+        # TwilioWebhookLog.objects.create(
+        #     method=request.method,
+        #     path=request.path,
+        #     headers=dict(request.headers),
+        #     payload=raw_body,
+        #     body=raw_body,
+        #     ip_address=self.get_client_ip(request),
+        # )
 
-        # ==========================================================================
-        # POST Data
-        # ==========================================================================
-        print("\n📌 POST DATA")
-        for key, value in request.POST.items():
-            print(f"{key}: {value}")
-
-        # ==========================================================================
-        # Query Params
-        # ==========================================================================
-        print("\n📌 QUERY PARAMS")
-        for key, value in request.query_params.items():
-            print(f"{key}: {value}")
-
-        # ==========================================================================
-        # Raw Body
-        # ==========================================================================
-        print("\n📌 RAW BODY")
-        print(request.body.decode("utf-8", errors="ignore"))
-
-        # ==========================================================================
-        # Uploaded Files (MMS)
-        # ==========================================================================
-        if request.FILES:
-            print("\n📌 FILES")
-            for key, file in request.FILES.items():
-                print(f"{key}: {file.name}")
-
-        print("=" * 100)
-
-        logger.info(
-            json.dumps(
-                {
-                    "headers": dict(request.headers),
-                    "data": dict(request.data),
-                    "post": dict(request.POST),
-                    "query_params": dict(request.query_params),
-                },
-                indent=4,
-                default=str,
-            )
+    def get(self, request, *args, **kwargs):
+        # self._log_request(request)
+        return Response(
+            {
+                "success": True,
+                "message": "Twilio Webhook endpoint is working.",
+            },
+            status=status.HTTP_200_OK,
         )
 
+    def post(self, request, *args, **kwargs):
+        self._log_request(request)
         return Response(
             {
                 "success": True,
@@ -573,10 +617,3 @@ class TwilioWebhookHandler(APIView):
             status=status.HTTP_200_OK,
         )
 
-    def get(self, request, *args, **kwargs):
-        return Response(
-            {
-                "success": True,
-                "message": "Webhook URL Currect"
-            }, status=status.HTTP_200_OK
-        )

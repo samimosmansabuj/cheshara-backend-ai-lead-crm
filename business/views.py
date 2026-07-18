@@ -211,9 +211,13 @@ class CreateSubAccountView(APIView):
     
     @transaction.atomic
     def get(self, request, *args, **kwargs):
+        data = request.data
+        phone_type = data.get("phone_type", None)
+        area_code = data.get("area_code", None)
+
         business_profile = self.get_organization_profile()
         twilio_service = TwilioService(business_profile)
-        twilio_number = twilio_service.search_numbers()
+        twilio_number = twilio_service.search_numbers(phone_type=phone_type, area_code=area_code)
         return Response({
             "success": True,
             "twilio_number": twilio_number
@@ -230,6 +234,7 @@ class CreateSubAccountView(APIView):
     def post(self, request, *args, **kwargs):
         data = request.data
         parchase_number = data.get("parchase_number", None)
+        phone_type = data.get("phone_type", None)
 
         business_profile = self.get_organization_profile()
         twilio_service = TwilioService(business_profile)
@@ -245,7 +250,7 @@ class CreateSubAccountView(APIView):
                 }, status=status.HTTP_201_CREATED
             )
         else:
-            twilio_number = twilio_service.list_numbers()
+            twilio_number = twilio_service.list_numbers(phone_type=phone_type)
             return Response(
                 {
                     "success": True,

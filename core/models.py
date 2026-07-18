@@ -96,6 +96,9 @@ class TwilioConfiguration(BaseModel):
     default_country = models.CharField(max_length=2, default="US")
     webhook_url = models.URLField(blank=True, default="")
     status_callback_url = models.URLField(blank=True, default="")
+    fallback_webhook_url = models.URLField(blank=True, null=True)
+    event_webhook_url = models.URLField(blank=True, null=True)
+    auto_assign_webhook = models.BooleanField(default=True, null=True)
     voice_webhook_url = models.URLField(blank=True, default="")
     webhook_secret = models.CharField(max_length=255, blank=True, default="")
 
@@ -150,6 +153,9 @@ class FreeTrailDetails(BaseModel):
 
 
 class TwilioWebhookLog(models.Model):
+    method = models.CharField(max_length=10, blank=True, null=True)
+    path = models.CharField(max_length=255, blank=True, null=True)
+
     headers = models.JSONField(default=dict)
     payload = models.JSONField(default=dict)
     body = models.TextField(blank=True)

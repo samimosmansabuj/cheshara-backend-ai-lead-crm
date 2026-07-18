@@ -165,9 +165,8 @@ class TwilioService:
             "address_requirements": number.address_requirements,
         }
 
-    def search_numbers(self, country="US", phone_type="local", area_code=None, sms_enabled=True, limit=20,):
+    def search_numbers(self, country="US", phone_type="local", area_code=None, sms_enabled=True, limit=2,):
         client = self.subaccount_client()
-        # client = self.master_client()
         try:
             if phone_type == "local":
                 resource = client.available_phone_numbers(country).local
@@ -176,7 +175,14 @@ class TwilioService:
             else:
                 raise ValueError("Unsupported phone type.")
             
-            numbers = resource.list(limit=2, sms_enabled=True)
+            # numbers = resource.list(limit=2, sms_enabled=True)
+            params = {
+                "limit": limit,
+                "sms_enabled": sms_enabled,
+            }
+            if area_code:
+                params["area_code"] = area_code
+            numbers = resource.list(**params)
             return [
                 self.serialize_search_phone_number(number)
                 for number in numbers
@@ -335,9 +341,15 @@ class TwilioService:
             raise Exception("Unable to purchase phone number.")
 
 
-    def list_numbers(self):
+    def list_numbers(self, country="US", phone_type="local", area_code=None, sms_enabled=True, limit=20,):
         client = self.subaccount_client()
-        numbers = client.incoming_phone_numbers.list()
+        if phone_type == "local":
+            resource = client.available_phone_numbers(country).local
+        elif phone_type == "toll_free":
+            resource = client.available_phone_numbers(country).toll_free
+        else:
+            raise ValueError("Unsupported phone type.")
+        numbers = resource.list(limit=2, sms_enabled=True)
         return [
             self.serialize_search_phone_number(number)
             for number in numbers
