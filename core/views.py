@@ -464,7 +464,7 @@ class FreeTrailPhoneNumberViewSet(OwnReadOnlyModelViewSet):
             "organization_terms_of_service": "https://trychesera.com/",
 
         }
-        return render(request, "sms_consent.html", context)
+        return render(request, "sms_consent2.html", context)
 
     # Update Twilio Number---
     @action(detail=True, methods=["post"], url_path="update-twilio-phone")

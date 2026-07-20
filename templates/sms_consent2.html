@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chesera LLC | SMS Consent</title>
+
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f4f7fa;
+            color: #344054;
+        }
+
+        .card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-title {
+            font-weight: 600;
+            color: #101828;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Custom Alert Styling */
+        .alert {
+            border: none;
+            border-radius: 12px;
+            border-left: 4px solid transparent;
+        }
+
+        .alert-primary {
+            border-left-color: #0d6efd;
+            background-color: #f0f7ff;
+        }
+
+        .alert-success {
+            border-left-color: #198754;
+            background-color: #f0fdf4;
+        }
+
+        .alert-warning {
+            border-left-color: #ffc107;
+            background-color: #fffbf0;
+        }
+
+        .alert-info {
+            border-left-color: #0dcaf0;
+            background-color: #f0f9ff;
+        }
+
+        .alert-secondary {
+            border-left-color: #6c757d;
+            background-color: #f8f9fa;
+        }
+
+        /* Custom List Styling */
+        .custom-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .custom-list li {
+            position: relative;
+            padding-left: 1.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .custom-list li::before {
+            content: "\F26A";
+            /* Bootstrap check-circle-fill icon */
+            font-family: "bootstrap-icons";
+            position: absolute;
+            left: 0;
+            color: #0d6efd;
+        }
+
+        .chat-bubble {
+            border-left: 3px solid #dee2e6;
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+
+        .footer-links a {
+            color: #6c757d;
+            text-decoration: none;
+            transition: color 0.2s ease-in-out;
+        }
+
+        .footer-links a:hover {
+            color: #0d6efd;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-md-10">
+
+                <div class="card bg-white">
+                    <div class="card-body p-sm-5 p-4">
+
+                        <!-- Header Section -->
+                        <div class="text-center mb-4">
+                            <h2 class="fw-bold text-dark">Chesera LLC</h2>
+                            <p class="text-muted fs-5">
+                                SMS Consent & Customer Support
+                            </p>
+                        </div>
+
+                        <hr class="text-muted opacity-25 mb-4">
+
+                        <!-- SMS Consent Policy Alert -->
+                        <div class="alert alert-primary p-4 mb-4">
+                            <h5 class="fw-bold mb-3">
+                                <i class="bi bi-shield-check me-2 text-primary"></i>SMS Consent Policy
+                            </h5>
+                            <p>
+                                Chesera LLC sends SMS messages only after obtaining customer consent. Customers initiate
+                                the conversation first and SMS communication is limited to customer support, appointment
+                                updates and service-related responses.
+                            </p>
+                            <ul class="custom-list mb-0">
+                                <li>Customers initiate the SMS conversation.</li>
+                                <li>Messages are sent only for customer support.</li>
+                                <li>No unsolicited marketing or promotional messages are sent.</li>
+                                <li>Reply <strong>STOP</strong> to opt out.</li>
+                                <li>Reply <strong>HELP</strong> for assistance.</li>
+                            </ul>
+                        </div>
+
+                        <!-- Trial Environment -->
+                        <div>
+                            <h4 class="section-title">Shared Customer Support Trial Environment</h4>
+                            <p>
+                                Chesera LLC uses SMS only for customer support, appointment updates, service inquiries
+                                and customer communication.
+                            </p>
+                            <p class="text-muted small">
+                                This shared toll-free phone number is provided exclusively for demonstration and
+                                evaluation purposes during the trial period.<br>
+                                Businesses using the trial environment share the same support number solely to evaluate
+                                AI-powered customer support workflows.<br>
+                                No marketing campaigns, promotional broadcasts or mass messaging are performed using
+                                this number.
+                            </p>
+                            <div class="alert alert-success d-flex align-items-center p-3">
+                                <i class="bi bi-check-circle-fill fs-5 text-success me-3"></i>
+                                <span class="mb-0 fw-medium">Customers voluntarily initiate SMS conversations.</span>
+                            </div>
+                        </div>
+
+                        <!-- SMS Consent & Supported Messaging -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4 class="section-title">SMS Consent</h4>
+                                <p>Before asking customers to send SMS, our business obtains customer consent.</p>
+                                <p>Messages are only sent in response to customer initiated conversations.</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h4 class="section-title">Supported Messaging</h4>
+                                <ul class="custom-list">
+                                    <li>Customer Support</li>
+                                    <li>Appointment Confirmation</li>
+                                    <li>Service Inquiry</li>
+                                    <li>Order Status</li>
+                                    <li>AI-assisted support responses</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning d-flex align-items-center mt-2 p-3">
+                            <i class="bi bi-exclamation-triangle-fill fs-5 text-warning me-3"></i>
+                            <span class="mb-0 fw-medium">We do NOT send unsolicited promotional or marketing SMS.</span>
+                        </div>
+
+                        <!-- Verbal Consent Process -->
+                        <div>
+                            <h4 class="section-title">Verbal Consent Process</h4>
+                            <div class="alert alert-info p-4">
+                                <p class="mb-4">
+                                    Before sending any SMS messages, our support representative asks for the customer's
+                                    permission.
+                                </p>
+                                <div class="bg-white border rounded p-4 mb-3 shadow-sm">
+                                    <div class="chat-bubble border-primary">
+                                        <strong class="text-primary d-block mb-1">Support Representative:</strong>
+                                        <p class="mb-0 small">
+                                            "May we send you SMS messages regarding your current support request? These
+                                            messages may include support updates, appointment updates and responses to
+                                            your inquiries. Message frequency varies. Message and data rates may apply.
+                                            Reply STOP to unsubscribe. Reply HELP for assistance. Do you agree to
+                                            receive these messages?"
+                                        </p>
+                                    </div>
+                                    <div class="chat-bubble border-success mb-0">
+                                        <strong class="text-success d-block mb-1">Customer:</strong>
+                                        <p class="mb-0">"Yes."</p>
+                                    </div>
+                                </div>
+                                <p class="small text-muted mb-0">
+                                    <i class="bi bi-info-circle me-1"></i> SMS messages are only sent after the customer
+                                    provides verbal consent. Support Representative records the customer's verbal
+                                    consent before SMS communication begins. Consent records are retained for compliance
+                                    purposes.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Customer-Initiated Conversations -->
+                        <div>
+                            <h4 class="section-title">Customer-Initiated Conversations</h4>
+                            <div class="alert alert-success p-4">
+                                <p class="fw-medium mb-3">
+                                    Customers always initiate the conversation by contacting our business first by:
+                                </p>
+                                <ul class="custom-list mb-0">
+                                    <li>Sending an SMS to our support number</li>
+                                    <li>Calling our support team</li>
+                                    <li>Submitting a support request</li>
+                                    <li>Requesting customer assistance</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Commands Table -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4 class="section-title">STOP & HELP Commands</h4>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="w-25">Keyword</th>
+                                                <th>Description</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><span class="badge bg-danger">STOP</span></td>
+                                                <td class="small">Immediately unsubscribe from SMS messages.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><span class="badge bg-info text-dark">HELP</span></td>
+                                                <td class="small">Receive customer support contact information.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <h4 class="section-title">Message Frequency</h4>
+                                <p class="mb-1">Message frequency varies depending on customer support activity.</p>
+                                <p class="text-muted small">Messages are only sent in response to customer requests.</p>
+
+                                <h4 class="section-title mt-4">SMS Terms</h4>
+                                <ul class="custom-list small">
+                                    <li>Message frequency varies.</li>
+                                    <li>Message & data rates may apply.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Example Conversation -->
+                        <div>
+                            <h4 class="section-title">Example Conversation</h4>
+                            <div class="border rounded p-4 bg-light shadow-sm">
+                                <div class="mb-3">
+                                    <strong class="d-block text-dark mb-1"><i
+                                            class="bi bi-person-fill me-2"></i>Customer</strong>
+                                    <div class="p-3 bg-white rounded border d-inline-block">
+                                        Hello, I need help with my appointment.
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <strong class="d-block text-primary mb-1">Chesera LLC <i
+                                            class="bi bi-building ms-2"></i></strong>
+                                    <div class="p-3 bg-primary text-white rounded border-0 d-inline-block text-start"
+                                        style="max-width: 80%;">
+                                        Hi [first_name],<br>
+                                        Thanks for contacting Chesera LLC.<br>
+                                        We received your message. This is an automated support response. A team member
+                                        will assist you shortly.<br><br>
+                                        <small class="opacity-75">Reply STOP to unsubscribe. Reply HELP for
+                                            help.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Compliance Statement -->
+                        <div class="alert alert-secondary mt-5 p-4 d-flex">
+                            <i class="bi bi-file-earmark-check-fill fs-3 text-secondary me-3"></i>
+                            <div>
+                                <strong class="d-block mb-1">Compliance Statement</strong>
+                                <p class="mb-0 small text-muted">
+                                    Our system maintains records of customer consent. Chesera LLC complies with
+                                    applicable SMS messaging regulations. We only send SMS messages to customers who
+                                    have provided consent. We never send unsolicited marketing messages using this
+                                    support number.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Contact -->
+                        <div class="mt-4 pt-4 border-top">
+                            <h5 class="fw-bold mb-3">Contact Information</h5>
+                            <p class="mb-1"><i class="bi bi-envelope-fill text-muted me-2"></i> <strong>Email:</strong>
+                                <a href="mailto:cosmascheseret@gmail.com"
+                                    class="text-decoration-none">cosmascheseret@gmail.com</a></p>
+                            <p class="mb-0"><i class="bi bi-globe text-muted me-2"></i> <strong>Website:</strong> <a
+                                    href="https://trychesera.com" target="_blank"
+                                    class="text-decoration-none">https://trychesera.com</a></p>
+                        </div>
+
+                        <hr class="mt-5 mb-4 opacity-25">
+
+                        <!-- Footer Links -->
+                        <div class="text-center footer-links small fw-medium">
+                            <a href="https://trychesera.com" target="_blank">Privacy Policy</a>
+                            <span class="mx-2 text-muted">|</span>
+                            <a href="https://trychesera.com" target="_blank">Terms of Service</a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

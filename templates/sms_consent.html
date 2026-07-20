@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ organization_name }} | SMS Consent</title>
+    <title>Chesera LLC | SMS Consent</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -39,17 +39,10 @@
                     <div class="card-body p-5">
 
                         <div class="text-center">
-
-                            {% if organization_logo %}
-                            <img class="logo mb-3" src="{{ organization_logo }}">
-                            {% endif %}
-
-                            <h2>{{ organization_name }}</h2>
-
+                            <h2>Chesera LLC</h2>
                             <p class="text-muted">
                                 SMS Consent & Customer Support
                             </p>
-
                         </div>
 
                         <hr>
@@ -59,8 +52,9 @@
                             <h5 class="mb-3">SMS Consent Policy</h5>
 
                             <p>
-                                {{ organization_name }} only communicates with customers who have
-                                voluntarily agreed to receive SMS messages.
+                                Chesera LLC sends SMS messages only after obtaining customer consent. Customers initiate
+                                the conversation first and SMS communication is limited to customer support, appointment
+                                updates and service-related responses.
                             </p>
 
                             <ul class="mb-0">
@@ -74,121 +68,208 @@
                         </div>
 
 
-                        <h4>Customer Support Trial</h4>
-
-                        <p>
-                            {{ organization_name }} uses SMS only for customer support,
-                            appointment updates, service inquiries and customer communication.
-                        </p>
-
-                        <div class="alert alert-success">
-
-                            Customers voluntarily initiate SMS conversations.
-
-                        </div>
-
-                        <h4 class="mt-4">
-                            SMS Consent
-                        </h4>
-
-                        <p>
-
-                            Before asking customers to send SMS,
-                            our business obtains customer consent.
-
-                        </p>
-
-                        <p>
-
-                            Messages are only sent in response to
-                            customer initiated conversations.
-
-                        </p>
-
-                        <h4 class="mt-4">
-                            Supported Messaging
-                        </h4>
-
-                        <ul>
-
-                            <li>Customer Support</li>
-
-                            <li>Appointment Confirmation</li>
-
-                            <li>Service Inquiry</li>
-
-                            <li>Order Status</li>
-
-                            <li>AI Automated Replies</li>
-
-                        </ul>
-
-                        <div class="alert alert-warning">
-
-                            We do NOT send unsolicited promotional or marketing SMS.
-
-                        </div>
-
-                        <h4 class="mt-4">
-                            Example Conversation
-                        </h4>
-
-                        <div class="border rounded p-3 bg-light">
-
-                            <b>Customer</b>
-
+                        <div>
+                            <h4>Shared Customer Support Trial Environment</h4>
                             <p>
-                                Hello, I need help with my appointment.
+                                Chesera LLC uses SMS only for customer support,
+                                appointment updates, service inquiries and customer communication.
+                                <br>
+                                This shared toll-free phone number is provided exclusively for demonstration and evaluation purposes during the trial period.<br>
+                                Businesses using the trial environment share the same support number solely to evaluate AI-powered customer support workflows.<br>
+                                No marketing campaigns, promotional broadcasts or mass messaging are performed using this number.<br>
                             </p>
-
-                            <hr>
-
-                            <b>{{ organization_name }}</b>
-
-                            <p>
-
-                                Hi [first_name], <br>
-                                Thanks for contacting {{ organization_name }}. <br>
-                                We received your message. This is an automated support response. A team member will assist you shortly.
-                                Reply STOP to unsubscribe. <br>
-                                Reply HELP for help. <br>
-
-                            </p>
-
+                            <div class="alert alert-success">
+                                Customers voluntarily initiate SMS conversations.
+                            </div>
                         </div>
 
-                        <h4 class="mt-4">
-                            SMS Terms
-                        </h4>
+                        <div>
+                            <h4 class="mt-4">
+                                SMS Consent
+                            </h4>
+                            <p>
+                                Before asking customers to send SMS,
+                                our business obtains customer consent.
+                            </p>
+                            <p>
+                                Messages are only sent in response to
+                                customer initiated conversations.
+                            </p>
+                        </div>
 
-                        <ul>
+                        <div>
+                            <h4 class="mt-4">
+                                Supported Messaging
+                            </h4>
+                            <ul>
+                                <li>Customer Support</li>
+                                <li>Appointment Confirmation</li>
+                                <li>Service Inquiry</li>
+                                <li>Order Status</li>
+                                <li>AI-assisted customer support responses</li>
+                            </ul>
+                            <div class="alert alert-warning">
+                                We do NOT send unsolicited promotional or marketing SMS.
+                            </div>
+                        </div>
 
-                            <li>Message frequency varies.</li>
+                        <div>
+                            <h4 class="mt-4">
+                                Verbal Consent Process
+                            </h4>
 
-                            <li>Message & data rates may apply.</li>
+                            <div class="alert alert-info">
 
-                            <li>Reply STOP to unsubscribe.</li>
+                                <p>
+                                    Before sending any SMS messages, our support representative asks for the customer's
+                                    permission.
+                                </p>
 
-                            <li>Reply HELP for assistance.</li>
+                                <div class="border rounded p-3 bg-white">
 
-                        </ul>
+                                    <strong>Support Representative</strong>
 
-                        <h4 class="mt-4">
-                            Contact
-                        </h4>
+                                    <p class="mb-3">
+                                        May we send you SMS messages regarding your current support request?<br>
+                                        These messages may include support updates, appointment updates and responses to
+                                        your inquiries. Message frequency varies. Message and data rates may apply.<br>
+                                        Reply STOP to unsubscribe.<br>
+                                        Reply HELP for assistance.<br>
+                                        Do you agree to receive these messages?
+                                    </p>
 
-                        <p>
+                                    <strong>Customer</strong>
 
-                            Email : {{ organization_email }}
+                                    <p class="mb-0">
+                                        "Yes."
+                                    </p>
 
-                            <br>
+                                </div>
 
-                            Website :
-                            <a href="{{ organization_website }}">
-                                {{ organization_website }}
-                            </a>
+                                <p class="mt-3 mb-0">
+                                    SMS messages are only sent after the customer provides verbal consent. <br>
+                                    Support Representative records the customer's verbal consent before SMS communication begins. Consent records are retained for compliance purposes.
+                                </p>
 
-                        </p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="mt-4">
+                                Customer-Initiated Conversations
+                            </h4>
+                            <div class="alert alert-success">
+                                <p class="mb-2">
+                                    Customers always initiate the conversation by contacting our business first.
+                                </p>
+                                <ul class="mb-0">
+                                    <li>Sending an SMS to our support number</li>
+                                    <li>Calling our support team</li>
+                                    <li>Submitting a support request</li>
+                                    <li>Requesting customer assistance</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="mt-4">
+                                Consent Records
+                            </h4>
+                            <p>
+                                Our system maintains records of customer consent before sending SMS messages.
+                                Consent may be obtained verbally by a customer support representative before SMS
+                                communication begins.
+                            </p>
+                        </div>
+
+                        <div>
+                            <h4 class="mt-4">
+                                STOP & HELP Commands
+                            </h4>
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th>Keyword</th>
+                                    <th>Description</th>
+                                </tr>
+                                <tr>
+                                    <td>STOP</td>
+                                    <td>Immediately unsubscribe from SMS messages.</td>
+                                </tr>
+                                <tr>
+                                    <td>HELP</td>
+                                    <td>Receive customer support contact information.</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div>
+                            <h4 class="mt-4">
+                                Message Frequency
+                            </h4>
+                            <p>
+                                Message frequency varies depending on customer support activity.<br>
+                                Messages are only sent in response to customer requests.
+                            </p>
+                        </div>
+
+                        <div>
+                            <h4 class="mt-4">
+                                Example Conversation
+                            </h4>
+                            <div class="border rounded p-3 bg-light">
+                                <b>Customer</b>
+                                <p>
+                                    Hello, I need help with my appointment.
+                                </p>
+                                <hr>
+                                <b>Chesera LLC</b>
+                                <p>
+                                    Hi [first_name], <br>
+                                    Thanks for contacting Chesera LLC. <br>
+                                    We received your message. This is an automated support response. A team member will
+                                    assist you shortly.
+                                    Reply STOP to unsubscribe. <br>
+                                    Reply HELP for help. <br>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="mt-4">
+                                SMS Terms
+                            </h4>
+                            <ul>
+                                <li>Message frequency varies.</li>
+                                <li>Message & data rates may apply.</li>
+                                <li>Reply STOP to unsubscribe.</li>
+                                <li>Reply HELP for assistance.</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h4 class="mt-4">
+                                Contact
+                            </h4>
+                            <p>
+                                Email : cosmascheseret@gmail.com
+                                <br>
+                                Website :
+                                <a href="https://trychesera.com">
+                                    https://trychesera.com
+                                </a>
+                            </p>
+                        </div>
+
+                        <div>
+                            <div class="alert alert-secondary mt-5">
+                                <strong>Compliance Statement</strong>
+                                <p class="mb-0">
+                                    Chesera LLC complies with applicable SMS messaging regulations.
+                                    We only send SMS messages to customers who have provided consent.
+                                    We never send unsolicited marketing messages using this support number.
+                                </p>
+                            </div>
+                        </div>
 
                         <hr>
 
@@ -196,13 +277,13 @@
 
                             <small>
 
-                                <a href="{{ organization_privacy_policy }}">
+                                <a href="https://trychesera.com">
                                     Privacy Policy
                                 </a>
 
                                 |
 
-                                <a href="{{ organization_terms_of_service }}">
+                                <a href="https://trychesera.com">
                                     Terms of Service
                                 </a>
 
