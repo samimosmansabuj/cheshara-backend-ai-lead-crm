@@ -49,6 +49,7 @@ from business.choices import PhoneNumberStatus
 from twilio.base.exceptions import TwilioRestException
 import json
 from django.shortcuts import render
+from rest_framework.exceptions import ValidationError
 
 class FreeTrailPhoneNumberViewSet(OwnReadOnlyModelViewSet):
     serializer_class = FreeTrailPhoneNumberSerializer
@@ -404,15 +405,20 @@ class FreeTrailPhoneNumberViewSet(OwnReadOnlyModelViewSet):
     def TFVRequestForIncommingNumber(self, request, pk):
         object = self.get_object()
         client = self.get_client(object)
-        tollfree_verifications = client.messaging.v1.tollfree_verifications.list(
-            tollfree_phone_number_sid=object.provider_phone_sid, limit=20
-        )
-        
-        data = []
-        for record in tollfree_verifications:
-            data.append(self.serializer_tfv(record))
-        
+        tfv_sid = request.data.get("tfv_sid")
 
+        if tfv_sid:
+            tollfree_verifications = client.messaging.v1.tollfree_verifications(
+                tfv_sid
+            ).fetch()
+            data = self.serializer_tfv(tollfree_verifications)
+        else:
+            tollfree_verifications = client.messaging.v1.tollfree_verifications.list(
+                tollfree_phone_number_sid=object.provider_phone_sid, limit=20
+            )
+            data = []
+            for record in tollfree_verifications:
+                data.append(self.serializer_tfv(record))
         return Response(
             {
                 "succcess": True,
@@ -452,6 +458,46 @@ class FreeTrailPhoneNumberViewSet(OwnReadOnlyModelViewSet):
             }
         )
 
+    @TFVRequestForIncommingNumber.mapping.patch
+    def TFVRequestReSubmit(self, request, pk):
+        object = self.get_object()
+        client = self.get_client(object)
+
+        tfv_sid = request.data.get("tfv_sid")
+        print("not tfv_sid: ", not tfv_sid)
+        if not tfv_sid:
+            raise ValidationError("TFV SID Must be set")
+        else:
+            tollfree_verifications = client.messages.v1.tollfree_verifications(
+                tfv_sid
+            )
+            # if tollfree_verifications.fetch().status != 
+            # tollfree_verifications = client.messaging.v1.tollfree_verifications(
+            #     tfv_sid
+            # ).update(
+            #     edit_reason="Updated the Verbal Consent Script",
+            #     # use_case_categories=["TWO_FACTOR_AUTHENTICATION", "MARKETING"],
+            #     # use_case_summary="This number is used to send out promotional offers and coupons to the customers of Owl, Inc.",
+            #     # production_message_sample="Get 10% off when you save this coupon: https://bit.ly/owlcoupon",
+            #     opt_in_image_urls=[
+            #         "https://prnt.sc/NFKFNgmoCFOO",
+            #         "https://trychesera.com/sms-consent",
+            #     ],
+            #     opt_in_type="VERBAL",
+            #     message_volume="1,000",
+            #     privacy_policy_url="https://trychesera.com/privacy",
+            #     terms_and_conditions_url="https://trychesera.com/terms"
+            # )
+            print("tollfree_verifications sid: ", tollfree_verifications.sid)
+            data = self.serializer_tfv(tollfree_verifications)
+            
+
+            return Response(
+                {
+                    "succcess": True,
+                    "data": data
+                }
+            )
     
     @action(detail=True, methods=["get"], url_path="sms-consent")
     def sms_consent(self, request, *args, **kwargs):
